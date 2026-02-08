@@ -1,387 +1,403 @@
 import { recipes } from './recipes.js';
 
+/* ── Chrome extension compat ── */
 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.session) {
-    chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
-} else {
-    console.warn('chrome.storage.session is not available');
+  chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' });
 }
 
-console.log('main.js loaded');
+/* ═══════════════════════════════════════════════════════════════
+   CONSTANTS
+   ═══════════════════════════════════════════════════════════════ */
+const CAT_COLORS = {
+  breakfast: 'var(--cat-breakfast)',
+  lunch:     'var(--cat-lunch)',
+  dinner:    'var(--cat-dinner)',
+  dessert:   'var(--cat-dessert)',
+};
 
+const BOOKMARK_OUT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+const BOOKMARK_IN  = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+
+function catColor(cat) { return CAT_COLORS[cat] || 'var(--ink-3)'; }
+
+/* ═══════════════════════════════════════════════════════════════
+   BOOT
+   ═══════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 function initializeApp() {
-    console.log('Initializing app');
-    generateRecipeCards();
-    addFeaturedRecipe();
-    initDarkMode();
-    setupEventListeners();
-    setupNavigation();
-    // Add smooth scroll behavior
-    document.documentElement.style.scrollBehavior = 'smooth';
+  renderRecipeCards();
+  initDarkMode();
+  setupSearch();
+  setupCategoryTabs();
+  setupSheets();
+  setupKeyboardShortcuts();
+  setupScrollDetect();
+  updateFavBadge();
 }
 
-function setupEventListeners() {
-    document.getElementById('search-bar').addEventListener('input', filterRecipes);
-    document.getElementById('category-filter').addEventListener('change', filterRecipes);
+/* ── Nav glass effect on scroll ── */
+function setupScrollDetect() {
+  const nav = document.getElementById('topnav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 16);
+  }, { passive: true });
 }
 
-function generateRecipeCards() {
-    const recipesContainer = document.getElementById('recipes');
-    recipesContainer.innerHTML = '';
+/* ═══════════════════════════════════════════════════════════════
+   RECIPE CARDS
+   ═══════════════════════════════════════════════════════════════ */
+function renderRecipeCards() {
+  const container = document.getElementById('recipes');
+  container.innerHTML = '';
 
-    const observer = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                observer.unobserve(img);
-            }
-        });
-    }, { rootMargin: "0px 0px 50px 0px" });
+  const ids = Object.keys(recipes);
+  const countEl = document.getElementById('recipe-count');
+  if (countEl) countEl.textContent = `${ids.length} recipe${ids.length !== 1 ? 's' : ''}`;
 
-    Object.keys(recipes).forEach(recipeId => {
-        const recipe = recipes[recipeId];
-        const card = document.createElement('div');
-        card.className = 'recipe-card';
-        card.setAttribute('data-category', recipe.category);
+  ids.forEach((id, i) => {
+    const r = recipes[id];
+    const isFav = getFavorites().includes(id);
+    const card = document.createElement('div');
+    card.className = 'recipe-card';
+    card.dataset.category = r.category;
+    card.dataset.recipeId = id;
+    card.style.setProperty('--card-accent', catColor(r.category));
+    card.style.animationDelay = `${0.24 + i * 0.07}s`;
 
-        card.innerHTML = `
-            <img data-src="${recipe.image}" alt="${recipe.title}" loading="lazy">
-            <h3>${recipe.title}</h3>
-            <p>${recipe.description.substring(0, 50)}...</p>
-            <button class="view-recipe-btn" data-recipe-id="${recipeId}">View Recipe</button>
-        `;
-
-        const img = card.querySelector('img');
-        observer.observe(img);
-
-        recipesContainer.appendChild(card);
-    });
-
-    document.querySelectorAll('.view-recipe-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const recipeId = this.getAttribute('data-recipe-id');
-            viewRecipe(recipeId);
-        });
-    });
-
-    console.log('Recipe cards generated');
-}
-
-function setupNavigation() {
-    const menuToggle = document.getElementById('menu-toggle');
-    const navMenu = document.getElementById('nav-menu');
-    const navLinks = document.querySelectorAll('.nav-link');
-
-    menuToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('show');
-    });
-
-    navLinks.forEach(link => {
-        link.addEventListener('click', (e) => {
-            e.preventDefault();
-            const targetId = link.getAttribute('href').substring(1);
-
-            // Hide recipe details if they're visible
-            if (document.getElementById('recipe-details').style.display === 'block') {
-                hideRecipeDetails();
-            }
-
-            // Scroll to the target section
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.scrollIntoView({ behavior: 'smooth' });
-                navMenu.classList.remove('show');
-            }
-
-            // Additional logic for home and recipes links
-            if (targetId === 'home') {
-                document.getElementById('featured-recipe').style.display = 'block';
-                document.getElementById('recipes').style.display = 'flex';
-                document.getElementById('recipes-title').style.display = 'block';
-            } else if (targetId === 'recipes') {
-                document.getElementById('recipes').style.display = 'flex';
-                document.getElementById('recipes-title').style.display = 'block';
-            }
-        });
-    });
-}
-
-function viewRecipe(recipeId) {
-    console.log('Viewing recipe:', recipeId);
-    const recipe = recipes[recipeId];
-    if (!recipe) {
-        console.error('Recipe not found');
-        alert('Sorry, there was an error loading the recipe. Please try again.');
-        return;
-    }
-
-    document.getElementById('recipes-title').style.display = 'none';
-    document.getElementById('recipes').style.display = 'none';
-    const recipeDetails = document.getElementById('recipe-details');
-    recipeDetails.style.display = 'block';
-    recipeDetails.innerHTML = '';
-
-    const content = `
-        <h2 id="recipe-title">${recipe.title}</h2>
-        <img id="recipe-image" src="${recipe.image}" alt="${recipe.title}" loading="lazy">
-        <p id="recipe-description">${recipe.description}</p>
-        <h3>Ingredients:</h3>
-        <ul id="recipe-ingredients">
-            ${recipe.ingredients.map(ingredient => `<li>${ingredient}</li>`).join('')}
-        </ul>
-        <h3>Instructions:</h3>
-        <p id="recipe-instructions">${recipe.instructions}</p>
-        <p id="recipe-nutrition">${recipe.nutrition}</p>
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="card-cat"><span class="cat-dot"></span>${r.category}</span>
+        <button class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${id}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
+      </div>
+      <h3 class="card-title">${r.title}</h3>
+      <p class="card-desc">${r.description}</p>
+      <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
-    recipeDetails.innerHTML = content;
 
-    const favoriteButton = document.createElement('button');
-    favoriteButton.id = 'favorite-button';
-    favoriteButton.onclick = () => toggleFavorite(recipeId);
-    recipeDetails.appendChild(favoriteButton);
-    updateFavoriteButton(recipeId);
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.card-save')) return;
+      viewRecipe(id);
+    });
 
-    const printButton = document.createElement('button');
-    printButton.textContent = 'Print Recipe';
-    printButton.onclick = printRecipe;
-    recipeDetails.appendChild(printButton);
+    card.querySelector('.card-save').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(id);
+      refreshCardSaves();
+      updateFavBadge();
+    });
 
-    // const shareButton = document.createElement('button');
-    // shareButton.textContent = 'Share Recipe';
-    // shareButton.onclick = shareRecipe;
-    // recipeDetails.appendChild(shareButton);
-
-    addCookingTimer();
-
-    const backButton = document.createElement('button');
-    backButton.textContent = 'Back to Recipes';
-    backButton.onclick = hideRecipeDetails;
-    recipeDetails.appendChild(backButton);
-
-    console.log('Recipe details populated, back button added');
+    container.appendChild(card);
+  });
 }
 
-// Modify the hideRecipeDetails function
-function hideRecipeDetails() {
-    console.log('Hiding recipe details');
-    document.getElementById('recipes-title').style.display = 'block';
-    document.getElementById('recipes').style.display = 'flex';
-    document.getElementById('recipe-details').style.display = 'none';
-    document.getElementById('recipes').scrollIntoView({ behavior: 'smooth' });
+function refreshCardSaves() {
+  const favs = getFavorites();
+  document.querySelectorAll('.card-save').forEach(btn => {
+    const id = btn.dataset.recipeId;
+    const saved = favs.includes(id);
+    btn.classList.toggle('saved', saved);
+    btn.innerHTML = saved ? BOOKMARK_IN : BOOKMARK_OUT;
+    btn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save recipe');
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   VIEW RECIPE — side panel
+   ═══════════════════════════════════════════════════════════════ */
+function viewRecipe(recipeId) {
+  const r = recipes[recipeId];
+  if (!r) return;
+
+  const overlay = document.getElementById('overlay');
+  const details = document.getElementById('recipe-details');
+  const isFav = getFavorites().includes(recipeId);
+  const color = catColor(r.category);
+
+  details.innerHTML = `
+    <div class="detail-cat-badge" style="color:${color}">
+      <span class="cat-dot" style="background:${color}"></span>
+      ${r.category}
+    </div>
+    <h2 class="detail-title">${r.title}</h2>
+    <p class="detail-desc">${r.description}</p>
+
+    <div class="detail-section">
+      <h3>Ingredients</h3>
+      <ul class="detail-list">
+        ${r.ingredients.map(i => `<li>${i}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="detail-section">
+      <h3>Method</h3>
+      <p class="detail-instructions">${r.instructions}</p>
+    </div>
+
+    <div class="detail-section">
+      <h3>Nutrition</h3>
+      <div class="detail-nutrition">${r.nutrition}</div>
+    </div>
+
+    <div class="detail-toolbar">
+      <button class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${recipeId}">
+        ${isFav ? 'Saved' : 'Save recipe'}
+      </button>
+      <button class="btn-print-detail" id="print-btn">Print</button>
+    </div>
+
+    <div class="detail-timer">
+      <h3>Cooking Timer</h3>
+      <div class="timer-controls">
+        <input type="number" id="timer-minutes" min="1" max="120" value="5" aria-label="Minutes">
+        <span class="timer-min-label">min</span>
+        <button id="start-timer-btn">Start</button>
+      </div>
+      <div id="timer-display"></div>
+    </div>
+  `;
+
+  overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+
+  details.querySelector('#fav-btn').addEventListener('click', () => {
+    toggleFavorite(recipeId);
+    viewRecipe(recipeId);
+    refreshCardSaves();
+    updateFavBadge();
+  });
+  details.querySelector('#print-btn').addEventListener('click', () => printRecipe(r));
+  details.querySelector('#start-timer-btn').addEventListener('click', startTimer);
+}
+
+function closeOverlay() {
+  document.getElementById('overlay').classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SEARCH & CATEGORY FILTER
+   ═══════════════════════════════════════════════════════════════ */
+function setupSearch() {
+  document.getElementById('search-bar').addEventListener('input', filterRecipes);
+}
+
+function setupCategoryTabs() {
+  const tabs = document.querySelectorAll('#cat-bar .cat');
+  const hiddenSelect = document.getElementById('category-filter');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      hiddenSelect.value = tab.dataset.category;
+      filterRecipes();
+    });
+  });
 }
 
 function filterRecipes() {
-    const searchValue = document.getElementById('search-bar').value.toLowerCase();
-    const categoryValue = document.getElementById('category-filter').value;
+  const search = document.getElementById('search-bar').value.toLowerCase();
+  const category = document.getElementById('category-filter').value;
+  let visible = 0;
 
-    document.querySelectorAll('.recipe-card').forEach(card => {
-        const title = card.querySelector('h3').innerText.toLowerCase();
-        const category = card.getAttribute('data-category');
+  document.querySelectorAll('.recipe-card').forEach(card => {
+    const title = card.querySelector('h3').textContent.toLowerCase();
+    const cat = card.dataset.category;
+    const show = (title.includes(search) || !search) && (cat === category || category === 'all');
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
 
-        if ((title.includes(searchValue) || searchValue === '') &&
-            (category === categoryValue || categoryValue === 'all')) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
+  const countEl = document.getElementById('recipe-count');
+  if (countEl) countEl.textContent = `${visible} recipe${visible !== 1 ? 's' : ''}`;
+
+  document.getElementById('no-results').classList.toggle('hidden', visible > 0);
+
+  const titleEl = document.getElementById('recipes-title');
+  titleEl.textContent = category === 'all'
+    ? 'All recipes'
+    : category.charAt(0).toUpperCase() + category.slice(1) + ' recipes';
 }
 
-function toggleFavorite(recipeId) {
-    if (typeof localStorage === 'undefined') {
-        console.warn('localStorage is not available');
-        return;
-    }
-
-    let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-    const index = favorites.indexOf(recipeId);
-
-    if (index === -1) {
-        favorites.push(recipeId);
-    } else {
-        favorites.splice(index, 1);
-    }
-
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    updateFavoriteButton(recipeId);
+/* ═══════════════════════════════════════════════════════════════
+   FAVORITES
+   ═══════════════════════════════════════════════════════════════ */
+function getFavorites() {
+  try { return JSON.parse(localStorage.getItem('favorites')) || []; }
+  catch { return []; }
 }
 
-function updateFavoriteButton(recipeId) {
-    if (typeof localStorage === 'undefined') {
-        console.warn('localStorage is not available');
-        return;
-    }
-
-    const favoriteButton = document.getElementById('favorite-button');
-    const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-
-    if (favorites.includes(recipeId)) {
-        favoriteButton.innerHTML = '❤ Remove from Favorites';
-        favoriteButton.classList.add('favorited');
-    } else {
-        favoriteButton.innerHTML = '❤ Add to Favorites';
-        favoriteButton.classList.remove('favorited');
-    }
+function toggleFavorite(id) {
+  const favs = getFavorites();
+  const idx = favs.indexOf(id);
+  if (idx === -1) favs.push(id); else favs.splice(idx, 1);
+  try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch {}
 }
 
-function addFeaturedRecipe() {
-    const featuredRecipeId = Object.keys(recipes)[Math.floor(Math.random() * Object.keys(recipes).length)];
-    const featuredRecipe = recipes[featuredRecipeId];
+function updateFavBadge() {
+  const favs = getFavorites();
+  const badge = document.getElementById('fav-count');
+  if (!badge) return;
+  if (favs.length > 0) {
+    badge.textContent = favs.length;
+    badge.classList.remove('hidden');
+  } else {
+    badge.classList.add('hidden');
+  }
+}
 
-    const featuredSection = document.getElementById('featured-recipe');
-    featuredSection.innerHTML = `
-        <h2>Featured Recipe</h2>
-        <div class="featured-recipe-card">
-            <img src="${featuredRecipe.image}" alt="${featuredRecipe.title}">
-            <div class="featured-recipe-content">
-                <h3>${featuredRecipe.title}</h3>
-                <p>${featuredRecipe.description}</p>
-                <button class="view-recipe-btn" data-recipe-id="${featuredRecipeId}">View Recipe</button>
-            </div>
-        </div>
+function renderFavoritesGrid() {
+  const grid = document.getElementById('favorites-grid');
+  const empty = document.getElementById('no-favorites');
+  const favs = getFavorites();
+  grid.innerHTML = '';
+
+  if (favs.length === 0) { empty.style.display = ''; return; }
+  empty.style.display = 'none';
+
+  favs.forEach(id => {
+    const r = recipes[id];
+    if (!r) return;
+
+    const item = document.createElement('div');
+    item.className = 'fav-item';
+    item.innerHTML = `
+      <span class="fav-cat" style="color:${catColor(r.category)}">
+        <span class="cat-dot" style="background:${catColor(r.category)}"></span>
+        ${r.category}
+      </span>
+      <h4>${r.title}</h4>
     `;
-
-    featuredSection.querySelector('.view-recipe-btn').addEventListener('click', function () {
-        const recipeId = this.getAttribute('data-recipe-id');
-        viewRecipe(recipeId);
-        window.scrollBy(0, 500);
-    });
-
-    // Set initial style based on current theme
-    updateFeaturedRecipeStyle();
+    item.addEventListener('click', () => { closeFavSheet(); viewRecipe(id); });
+    grid.appendChild(item);
+  });
 }
 
-function printRecipe() {
-    const recipeDetails = document.getElementById('recipe-details').cloneNode(true);
-    recipeDetails.querySelectorAll('button').forEach(button => button.remove());
+/* ═══════════════════════════════════════════════════════════════
+   SHEETS (Overlay / Favorites / Contact)
+   ═══════════════════════════════════════════════════════════════ */
+function setupSheets() {
+  document.getElementById('overlay-close').addEventListener('click', closeOverlay);
+  document.querySelector('#overlay .panel-backdrop').addEventListener('click', closeOverlay);
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write('<html><head><title>Print Recipe</title>');
-    printWindow.document.write('<link rel="stylesheet" href="styles.css">');
-    printWindow.document.write('</head><body>');
-    printWindow.document.write(recipeDetails.innerHTML);
-    printWindow.document.write('</body></html>');
-    printWindow.document.close();
-    printWindow.print();
+  document.getElementById('btn-favs').addEventListener('click', openFavSheet);
+  document.getElementById('fav-sheet-close').addEventListener('click', closeFavSheet);
+  document.querySelector('#fav-sheet .modal-backdrop').addEventListener('click', closeFavSheet);
+
+  document.getElementById('btn-contact').addEventListener('click', openContactSheet);
+  document.getElementById('contact-sheet-close').addEventListener('click', closeContactSheet);
+  document.querySelector('#contact-sheet .modal-backdrop').addEventListener('click', closeContactSheet);
 }
 
-function addCookingTimer() {
-    const timerSection = document.createElement('div');
-    timerSection.id = 'cooking-timer';
-    timerSection.innerHTML = `
-        <h3>Cooking Timer</h3>
-        <input type="number" id="timer-minutes" min="1" max="120" value="5">
-        <button id="start-timer-btn">Start Timer</button>
-        <div id="timer-display"></div>
-    `;
-    document.getElementById('recipe-details').appendChild(timerSection);
-
-    document.getElementById('start-timer-btn').addEventListener('click', startTimer);
+function openFavSheet() {
+  renderFavoritesGrid();
+  document.getElementById('fav-sheet').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 }
+function closeFavSheet() {
+  document.getElementById('fav-sheet').classList.add('hidden');
+  if (document.getElementById('overlay').classList.contains('hidden')) document.body.style.overflow = '';
+}
+
+function openContactSheet() {
+  document.getElementById('contact-sheet').classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeContactSheet() {
+  document.getElementById('contact-sheet').classList.add('hidden');
+  if (document.getElementById('overlay').classList.contains('hidden')) document.body.style.overflow = '';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DARK MODE  (light is default; .dark enables dark palette)
+   ═══════════════════════════════════════════════════════════════ */
+function initDarkMode() {
+  const btn = document.getElementById('toggle-dark-mode');
+
+  try {
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark');
+    }
+  } catch {}
+
+  btn.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+    const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
+    try { localStorage.setItem('theme', mode); } catch {}
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+   ═══════════════════════════════════════════════════════════════ */
+function setupKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+      e.preventDefault();
+      document.getElementById('search-bar').focus();
+    }
+    if (e.key === 'Escape') {
+      document.getElementById('search-bar').blur();
+      closeOverlay();
+      closeFavSheet();
+      closeContactSheet();
+    }
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════════════════════ */
+function printRecipe(recipe) {
+  const pw = window.open('', '_blank');
+  pw.document.write(`<html><head><title>${recipe.title}</title>
+    <style>
+      body{font-family:Georgia,serif;max-width:640px;margin:40px auto;padding:0 20px;color:#1A1815}
+      h2{margin-bottom:8px;font-size:1.8rem}
+      h3{margin-top:24px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:#999;border-bottom:1px solid #eee;padding-bottom:8px}
+      ul{padding-left:20px;margin-top:12px}li{margin-bottom:6px}
+      p{line-height:1.7;margin-top:10px}
+      .nut{margin-top:16px;padding:12px;background:#f5f2ec;border-radius:4px;font-size:0.85rem}
+    </style></head><body>
+    <h2>${recipe.title}</h2>
+    <p>${recipe.description}</p>
+    <h3>Ingredients</h3>
+    <ul>${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
+    <h3>Method</h3>
+    <p>${recipe.instructions}</p>
+    <h3>Nutrition</h3>
+    <div class="nut">${recipe.nutrition}</div>
+    </body></html>`);
+  pw.document.close();
+  pw.print();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   COOKING TIMER
+   ═══════════════════════════════════════════════════════════════ */
+let timerInterval = null;
 
 function startTimer() {
-    const minutes = parseInt(document.getElementById('timer-minutes').value);
-    let seconds = minutes * 60;
-    const timerDisplay = document.getElementById('timer-display');
+  if (timerInterval) clearInterval(timerInterval);
 
-    const countDown = setInterval(() => {
-        const minutesLeft = Math.floor(seconds / 60);
-        const secondsLeft = seconds % 60;
-        timerDisplay.textContent = `${minutesLeft}:${secondsLeft < 10 ? '0' : ''}${secondsLeft}`;
+  const minutes = parseInt(document.getElementById('timer-minutes').value) || 5;
+  let seconds = minutes * 60;
+  const display = document.getElementById('timer-display');
 
-        if (seconds === 0) {
-            clearInterval(countDown);
-            timerDisplay.textContent = "Time's up!";
-            alert("Timer finished!");
-        }
-        seconds--;
-    }, 1000);
-}
-
-// function shareRecipe() {
-//     try {
-//         const recipeUrl = window.location.href;
-//         const shareText = `Check out this delicious recipe: ${recipeUrl}`;
-
-//         if (navigator.share) {
-//             navigator.share({
-//                 title: 'Share Recipe',
-//                 text: shareText,
-//                 url: recipeUrl,
-//             })
-//                 .then(() => console.log('Successful share'))
-//                 .catch((error) => {
-//                     console.error('Error sharing:', error);
-//                     fallbackShare(recipeUrl);
-//                 });
-//         } else {
-//             fallbackShare(recipeUrl);
-//         }
-//     } catch (error) {
-//         console.error('Error in shareRecipe:', error);
-//         alert('Sorry, there was an error sharing the recipe. Please try again.');
-//     }
-// }
-
-function fallbackShare(recipeUrl) {
-    const result = prompt('Copy this link to share the recipe:', recipeUrl);
-    if (result !== null) {
-        alert('Link copied to clipboard!');
+  timerInterval = setInterval(() => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    display.textContent = `${m}:${s < 10 ? '0' : ''}${s}`;
+    if (seconds <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      display.textContent = 'Done!';
+      alert('Timer finished!');
     }
+    seconds--;
+  }, 1000);
 }
 
-function initDarkMode() {
-    const toggleButton = document.getElementById('toggle-dark-mode');
-
-    toggleButton.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        const currentMode = document.body.classList.contains('dark-mode') ? 'dark' : 'light';
-
-        toggleButton.textContent = currentMode === 'dark' ? '🌞' : '🌚';
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('theme', currentMode);
-        }
-        
-        // Update featured recipe
-        updateFeaturedRecipeStyle();
-    });
-
-    if (typeof localStorage !== 'undefined') {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme && savedTheme === 'dark') {
-            document.body.classList.add('dark-mode');
-            toggleButton.textContent = '🌞';
-        }
-    }
-
-    // Initial update of featured recipe style
-    updateFeaturedRecipeStyle();
-}
-
-function updateFeaturedRecipeStyle() {
-    const featuredRecipeCard = document.querySelector('.featured-recipe-card');
-    if (featuredRecipeCard) {
-        if (document.body.classList.contains('dark-mode')) {
-            featuredRecipeCard.style.backgroundColor = '#333';
-            featuredRecipeCard.style.color = '#f0f0f0';
-        } else {
-            featuredRecipeCard.style.backgroundColor = '#fff5e6';
-            featuredRecipeCard.style.color = '#333';
-        }
-    }
-}
-
-// Make necessary functions globally available
-Object.assign(window, {
-    viewRecipe,
-    hideRecipeDetails,
-    filterRecipes,
-    startTimer,
-    toggleFavorite,
-    printRecipe,
-    // shareRecipe
-});
-
-console.log('Global assignments completed');
+/* ── Expose globals ── */
+Object.assign(window, { viewRecipe, toggleFavorite, startTimer, printRecipe, filterRecipes });

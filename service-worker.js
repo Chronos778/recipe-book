@@ -1,14 +1,10 @@
-const CACHE_NAME = 'recipe-book-cache-v2';
+const CACHE_NAME = 'recipe-book-cache-v3';
 const urlsToCache = [
     '/',
     '/index.html',
     '/styles.css',
     '/main.js',
     '/recipes.js',
-    '/images/recipe1.jpg',
-    '/images/recipe2.jpg',
-    '/images/header.webp', // Add the header image to the cache
-    // Add more resources to cache
 ];
 
 self.addEventListener('install', (event) => {
