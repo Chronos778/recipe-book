@@ -3,92 +3,128 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cooking for Cooked's</title>
-  <link rel="preload" href="styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <link rel="preload" href="main.js" as="script" crossorigin="anonymous">
-  <link rel="preload" href="images/header.webp" as="image">
+  <title>Cooked's</title>
   <link rel="stylesheet" href="styles.css">
   <script type="module" src="main.js"></script>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self';">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;700&display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="icon" href="images/icon.png" type="image/x-icon">
-  <meta property="og:title" content="Cooking for Cooked's">
-  <meta property="og:description" content="Discover a variety of delicious recipes that you can try at home. From appetizers to desserts, find your next favorite dish!">
+  <meta property="og:title" content="Cooked's">
+  <meta property="og:description" content="Discover a variety of delicious recipes that you can try at home.">
   <meta property="og:image" content="https://sc.is-a.dev/recipe-book/images/og-image.png">
   <meta property="og:url" content="https://sc.is-a.dev/recipe-book">
   <meta property="og:type" content="website">
-  <meta name="description" content="Discover a variety of delicious recipes that you can try at home. From appetizers to desserts, find your next favorite dish!">
+  <meta name="description" content="Discover a variety of delicious recipes that you can try at home.">
   <link rel="manifest" href="manifest.json">
 </head>
 
 <body>
-  <header>
-    <h1>🍜 Cooking for Cooked's</h1>
-    <nav aria-label="Main Navigation">
-      <button id="menu-toggle" aria-label="Toggle menu">☰</button>
-      <ul id="nav-menu" role="menubar">
-        <li role="menuitem"><a href="#home" class="nav-link">Home</a></li>
-        <li role="menuitem"><a href="#recipes" class="nav-link">Recipes</a></li>
-        <li role="menuitem"><a href="#contact" class="nav-link">Contact</a></li>
-        <li role="menuitem"><button id="toggle-dark-mode" aria-label="Toggle Dark Mode">🌚</button></li>
-      </ul>
-    </nav>
+
+  <!-- ═══ NAV ═══ -->
+  <nav id="topnav">
+    <a class="brand" href="#">Cooked's</a>
+    <div class="nav-spacer"></div>
+    <div class="search-box">
+      <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="text" id="search-bar" placeholder="Search recipes…" aria-label="Search recipes" autocomplete="off">
+    </div>
+    <div class="nav-actions">
+      <button id="btn-favs" class="nav-link" aria-label="Saved recipes">
+        Saved
+        <span id="fav-count" class="count-pill hidden">0</span>
+      </button>
+      <button id="btn-contact" class="nav-link">Contact</button>
+      <button id="toggle-dark-mode" class="nav-link nav-theme" aria-label="Toggle theme">
+        <span class="theme-light-label">Dark</span>
+        <span class="theme-dark-label">Light</span>
+      </button>
+    </div>
+  </nav>
+
+  <select id="category-filter" class="sr-only" aria-hidden="true">
+    <option value="all">All</option>
+    <option value="breakfast">Breakfast</option>
+    <option value="lunch">Lunch</option>
+    <option value="dinner">Dinner</option>
+    <option value="dessert">Dessert</option>
+  </select>
+
+  <!-- ═══ HEADER ═══ -->
+  <header id="page-header">
+    <h1>Good food,<br><em>perfected.</em></h1>
+    <p class="header-sub">A curated collection of recipes worth keeping.</p>
   </header>
 
-  <main>
-    <section id="home">
-      <h2>Welcome to the Cooking for Cooked's</h2>
-      <p>Discover a variety of delicious recipes that you can try at home. From appetizers to desserts, find your next
-        favorite dish!</p>
-    </section>
+  <!-- ═══ CATEGORIES ═══ -->
+  <div id="cat-bar">
+    <div class="cat-row">
+      <button class="cat active" data-category="all">All</button>
+      <button class="cat" data-category="breakfast">Breakfast</button>
+      <button class="cat" data-category="lunch">Lunch</button>
+      <button class="cat" data-category="dinner">Dinner</button>
+      <button class="cat" data-category="dessert">Dessert</button>
+    </div>
+    <span id="recipe-count" class="meta-count"></span>
+  </div>
+  <h2 id="recipes-title" class="sr-only">All recipes</h2>
 
-    <!-- featured recipe will be inserted here -->
-    <section id="featured-recipe"></section>
-
-    <!-- search bar and filters -->
-    <section id="search-filters">
-      <input type="text" id="search-bar" placeholder="Search recipes..." aria-label="Search recipes">
-      <select id="category-filter" aria-label="Filter by category">
-        <option value="all">All Categories</option>
-        <option value="breakfast">Breakfast</option>
-        <option value="lunch">Lunch</option>
-        <option value="dinner">Dinner</option>
-        <option value="dessert">Dessert</option>
-      </select>
-    </section>
-
-    <h2 id="recipes-title">Recipes</h2>
-    <section id="recipes">
-      <!-- recipe cards will be generated here -->
-    </section>
-
-    <!-- section to dynamically display the recipe details -->
-    <section id="recipe-details" class="hidden">
-      <!-- recipe details will be populated here -->
-    </section>
-
-    <section id="contact">
-      <h2>Contact Us</h2>
-      <p>Feel free to contact us for more recipes or feedback.</p>
-      <a class="foot-btn" href="https://discord.gg/UVWjuAh"> Join Discord!</a>
-    </section>
+  <!-- ═══ RECIPES ═══ -->
+  <main id="main">
+    <div id="recipes" class="recipe-grid"></div>
+    <p id="no-results" class="hidden empty">No recipes match your search.</p>
   </main>
 
-  <footer>
-    <p style="
-    /* padding: 0 10px; */
-    margin: 0 10px;
-">&copy; 2024 🍜 Cooking for Cooked's. All rights reserved.</p>
+  <!-- ═══ DETAIL PANEL ═══ -->
+  <div id="overlay" class="panel-overlay hidden" role="dialog" aria-modal="true">
+    <div class="panel-backdrop"></div>
+    <aside class="panel-drawer">
+      <div class="panel-top">
+        <button id="overlay-close" class="panel-back" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          Back
+        </button>
+      </div>
+      <div id="recipe-details" class="panel-body"></div>
+    </aside>
+  </div>
+
+  <!-- ═══ FAVORITES MODAL ═══ -->
+  <div id="fav-sheet" class="modal-wrap hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2>Saved Recipes</h2>
+        <button id="fav-sheet-close" class="modal-x" aria-label="Close">&times;</button>
+      </div>
+      <div id="favorites-grid" class="fav-grid"></div>
+      <p id="no-favorites" class="empty">No saved recipes yet.</p>
+    </div>
+  </div>
+
+  <!-- ═══ CONTACT MODAL ═══ -->
+  <div id="contact-sheet" class="modal-wrap hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box modal-box--narrow">
+      <div class="modal-head">
+        <h2>Get in Touch</h2>
+        <button id="contact-sheet-close" class="modal-x" aria-label="Close">&times;</button>
+      </div>
+      <p class="modal-text">Have a recipe idea or feedback? We'd love to hear from you.</p>
+      <a class="discord-btn" href="https://discord.gg/UVWjuAh" target="_blank" rel="noopener">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+        Join Discord
+      </a>
+    </div>
+  </div>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer id="footer">
+    <p>&copy; 2026 Cooked's</p>
   </footer>
 
-  <script type="module" src="main.js"></script>
 </body>
-
 </html>
