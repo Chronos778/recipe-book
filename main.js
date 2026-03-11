@@ -7,6 +7,8 @@ if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.session) {
 
 let activeRecipe = null;
 let activeMultiplier = 1;
+let closeMobileMenuHandler = null;
+const focusReturnStack = [];
 
 /* ═══════════════════════════════════════════════════════════════
    CONSTANTS
@@ -20,8 +22,109 @@ const CAT_COLORS = {
 
 const BOOKMARK_OUT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 const BOOKMARK_IN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
+const DEFAULT_TIME_BY_CATEGORY = {
+  breakfast: '20 min',
+  lunch: '25 min',
+  dinner: '35 min',
+  dessert: '45 min',
+};
 
 function catColor(cat) { return CAT_COLORS[cat] || 'var(--ink-3)'; }
+
+function inferDifficulty(recipe) {
+  const count = Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0;
+  if (count <= 6) return 'Easy';
+  if (count <= 8) return 'Medium';
+  return 'Hard';
+}
+
+function getRecipeMeta(recipe) {
+  const servings = Number.isFinite(recipe.servings) ? recipe.servings : 2;
+  const difficulty = recipe.difficulty || inferDifficulty(recipe);
+  const totalTime = recipe.totalTime || DEFAULT_TIME_BY_CATEGORY[recipe.category] || '30 min';
+  return { servings, difficulty, totalTime };
+}
+
+function safeReadJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeWriteJSON(key, value) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function safeReadText(key, fallback = '') {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw == null ? fallback : raw;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeWriteText(key, value) {
+  try {
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function rememberFocus() {
+  const active = document.activeElement;
+  focusReturnStack.push(active instanceof HTMLElement ? active : null);
+}
+
+function restoreFocus() {
+  const previous = focusReturnStack.pop();
+  if (previous && previous.isConnected) previous.focus();
+}
+
+function syncBodyScrollLock() {
+  const hasOpenLayer =
+    !document.getElementById('overlay').classList.contains('hidden') ||
+    !document.getElementById('fav-sheet').classList.contains('hidden') ||
+    !document.getElementById('contact-sheet').classList.contains('hidden') ||
+    !document.getElementById('mobile-menu').classList.contains('hidden');
+  document.body.style.overflow = hasOpenLayer ? 'hidden' : '';
+}
+
+function focusFirstElement(container) {
+  if (!container) return;
+  const focusables = container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+  if (focusables.length) {
+    focusables[0].focus();
+  } else {
+    container.focus();
+  }
+}
+
+function trapFocus(event, container) {
+  if (event.key !== 'Tab' || !container || container.classList.contains('hidden')) return;
+  const focusables = Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'));
+  if (!focusables.length) return;
+
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════════
    BOOT
@@ -30,6 +133,7 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 
 function initializeApp() {
   renderRecipeCards();
+  renderRecentViews();
   initDarkMode();
   setupSearch();
   setupCategoryTabs();
@@ -37,6 +141,45 @@ function initializeApp() {
   setupKeyboardShortcuts();
   setupScrollDetect();
   updateFavBadge();
+}
+
+function getRecentViews() {
+  const ids = safeReadJSON('recentViews', []);
+  return Array.isArray(ids) ? ids.filter(id => recipes[id]) : [];
+}
+
+function pushRecentView(recipeId) {
+  const recents = getRecentViews().filter(id => id !== recipeId);
+  recents.unshift(recipeId);
+  safeWriteJSON('recentViews', recents.slice(0, 6));
+}
+
+function renderRecentViews() {
+  const section = document.getElementById('recently-viewed');
+  const list = document.getElementById('recently-viewed-list');
+  if (!section || !list) return;
+
+  const recents = getRecentViews();
+  list.innerHTML = '';
+
+  if (!recents.length) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  recents.forEach((id) => {
+    const recipe = recipes[id];
+    if (!recipe) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'recent-pill';
+    button.innerHTML = `<span class="cat-dot" style="color:${catColor(recipe.category)}"></span>${recipe.title}`;
+    button.addEventListener('click', () => viewRecipe(id));
+    list.appendChild(button);
+  });
+
+  section.classList.remove('hidden');
 }
 
 /* ── Nav glass effect on scroll ── */
@@ -55,32 +198,44 @@ function renderRecipeCards() {
   container.innerHTML = '';
 
   const ids = Object.keys(recipes);
-  const countEl = document.getElementById('recipe-count');
-  if (countEl) countEl.textContent = `${ids.length} recipe${ids.length !== 1 ? 's' : ''}`;
 
   ids.forEach((id, i) => {
     const r = recipes[id];
+    const meta = getRecipeMeta(r);
     const isFav = getFavorites().includes(id);
     const card = document.createElement('div');
     card.className = 'recipe-card';
     card.dataset.category = r.category;
     card.dataset.recipeId = id;
+    card.dataset.searchText = `${r.title} ${r.ingredients.join(' ')}`.toLowerCase();
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `View recipe: ${r.title}`);
     card.style.setProperty('--card-accent', catColor(r.category));
     card.style.animationDelay = `${0.24 + i * 0.07}s`;
 
     card.innerHTML = `
       <div class="card-top">
         <span class="card-cat"><span class="cat-dot"></span>${r.category}</span>
-        <button class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${id}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
+        <button type="button" class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${id}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
       </div>
       <h3 class="card-title">${r.title}</h3>
       <p class="card-desc">${r.description}</p>
+      <p class="card-meta">Serves ${meta.servings} · ${meta.totalTime} · ${meta.difficulty}</p>
       <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
 
     card.addEventListener('click', (e) => {
       if (e.target.closest('.card-save')) return;
       viewRecipe(id);
+    });
+
+    card.addEventListener('keydown', (e) => {
+      if (e.target.closest('.card-save')) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        viewRecipe(id);
+      }
     });
 
     card.querySelector('.card-save').addEventListener('click', (e) => {
@@ -97,6 +252,9 @@ function renderRecipeCards() {
 
     container.appendChild(card);
   });
+
+  updateCategoryCounts();
+  filterRecipes();
 }
 
 function refreshCardSaves() {
@@ -117,6 +275,9 @@ function viewRecipe(recipeId) {
   const r = recipes[recipeId];
   if (!r) return;
 
+  pushRecentView(recipeId);
+  renderRecentViews();
+
   activeRecipe = r;
   activeMultiplier = 1;
 
@@ -124,24 +285,31 @@ function viewRecipe(recipeId) {
   const details = document.getElementById('recipe-details');
   const isFav = getFavorites().includes(recipeId);
   const color = catColor(r.category);
+  const meta = getRecipeMeta(r);
 
   details.innerHTML = `
-    <img src="${r.image}" alt="${r.title}" class="detail-hero">
+    <img src="${r.image}" alt="${r.title}" class="detail-hero" loading="lazy" decoding="async">
     <div class="detail-content">
       <div class="detail-cat-badge" style="color:${color}">
         <span class="cat-dot" style="background:${color}"></span>
         ${r.category}
       </div>
-      <h2 class="detail-title">${r.title}</h2>
+      <h2 id="recipe-detail-title" class="detail-title">${r.title}</h2>
       <p class="detail-desc">${r.description}</p>
 
+      <div class="detail-meta" aria-label="Recipe details">
+        <span class="meta-chip">Serves ${meta.servings}</span>
+        <span class="meta-chip">${meta.totalTime}</span>
+        <span class="meta-chip">${meta.difficulty}</span>
+      </div>
+
       <div class="detail-section">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="detail-section-head">
             <h3>Ingredients</h3>
             <div class="servings-control">
-                <button class="serving-btn active" data-multiplier="1">1x</button>
-                <button class="serving-btn" data-multiplier="2">2x</button>
-                <button class="serving-btn" data-multiplier="4">4x</button>
+                <button type="button" class="serving-btn active" data-multiplier="1">1x</button>
+                <button type="button" class="serving-btn" data-multiplier="2">2x</button>
+                <button type="button" class="serving-btn" data-multiplier="4">4x</button>
             </div>
         </div>
         <ul class="detail-list ingredients-list" id="ing-list">
@@ -167,10 +335,10 @@ function viewRecipe(recipeId) {
       </div>
 
       <div class="detail-toolbar">
-        <button class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${recipeId}">
+        <button type="button" class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${recipeId}">
           ${isFav ? 'Saved' : 'Save recipe'}
         </button>
-        <button class="btn-print-detail" id="print-btn">Print</button>
+        <button type="button" class="btn-print-detail" id="print-btn">Print</button>
       </div>
 
 
@@ -178,7 +346,9 @@ function viewRecipe(recipeId) {
   `;
 
   overlay.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  rememberFocus();
+  focusFirstElement(overlay.querySelector('.panel-drawer'));
+  syncBodyScrollLock();
 
   // Attach serving button listeners
   details.querySelectorAll('.serving-btn').forEach(btn => {
@@ -203,7 +373,8 @@ function viewRecipe(recipeId) {
 
 function closeOverlay() {
   document.getElementById('overlay').classList.add('hidden');
-  document.body.style.overflow = '';
+  syncBodyScrollLock();
+  restoreFocus();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -218,12 +389,37 @@ function setupCategoryTabs() {
   const hiddenSelect = document.getElementById('category-filter');
 
   tabs.forEach(tab => {
+    if (!tab.dataset.baseLabel) {
+      tab.dataset.baseLabel = tab.textContent.trim();
+    }
+  });
+
+  tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
+      tabs.forEach(t => t.setAttribute('aria-current', 'false'));
+      tab.setAttribute('aria-current', 'true');
       hiddenSelect.value = tab.dataset.category;
       filterRecipes();
     });
+  });
+
+  updateCategoryCounts();
+}
+
+function updateCategoryCounts() {
+  const counts = { all: 0 };
+  Object.values(recipes).forEach((recipe) => {
+    counts.all += 1;
+    counts[recipe.category] = (counts[recipe.category] || 0) + 1;
+  });
+
+  document.querySelectorAll('#cat-bar .cat').forEach((tab) => {
+    const category = tab.dataset.category;
+    const baseLabel = tab.dataset.baseLabel || tab.textContent.trim();
+    const count = counts[category] || 0;
+    tab.textContent = `${baseLabel} (${count})`;
   });
 }
 
@@ -233,9 +429,9 @@ function filterRecipes() {
   let visible = 0;
 
   document.querySelectorAll('.recipe-card').forEach(card => {
-    const title = card.querySelector('h3').textContent.toLowerCase();
+    const searchText = card.dataset.searchText || '';
     const cat = card.dataset.category;
-    const show = (title.includes(search) || !search) && (cat === category || category === 'all');
+    const show = (searchText.includes(search) || !search) && (cat === category || category === 'all');
 
     if (show) {
       card.style.display = '';
@@ -265,15 +461,15 @@ function filterRecipes() {
    FAVORITES
    ═══════════════════════════════════════════════════════════════ */
 function getFavorites() {
-  try { return JSON.parse(localStorage.getItem('favorites')) || []; }
-  catch { return []; }
+  const favs = safeReadJSON('favorites', []);
+  return Array.isArray(favs) ? favs : [];
 }
 
 function toggleFavorite(id) {
   const favs = getFavorites();
   const idx = favs.indexOf(id);
   if (idx === -1) favs.push(id); else favs.splice(idx, 1);
-  try { localStorage.setItem('favorites', JSON.stringify(favs)); } catch { }
+  safeWriteJSON('favorites', favs);
 }
 
 function updateFavBadge() {
@@ -317,6 +513,9 @@ function renderFavoritesGrid() {
 
     const item = document.createElement('div');
     item.className = 'fav-item';
+    item.tabIndex = 0;
+    item.setAttribute('role', 'button');
+    item.setAttribute('aria-label', `Open saved recipe: ${r.title}`);
     item.innerHTML = `
       <span class="fav-cat" style="color:${catColor(r.category)}">
         <span class="cat-dot" style="background:${catColor(r.category)}"></span>
@@ -325,6 +524,13 @@ function renderFavoritesGrid() {
       <h4>${r.title}</h4>
     `;
     item.addEventListener('click', () => { closeFavSheet(); viewRecipe(id); });
+    item.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        closeFavSheet();
+        viewRecipe(id);
+      }
+    });
     grid.appendChild(item);
   });
 }
@@ -333,6 +539,20 @@ function renderFavoritesGrid() {
    SHEETS (Overlay / Favorites / Contact)
    ═══════════════════════════════════════════════════════════════ */
 function setupSheets() {
+  const overlay = document.getElementById('overlay');
+  const favSheet = document.getElementById('fav-sheet');
+  const contactSheet = document.getElementById('contact-sheet');
+
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('hidden')) trapFocus(e, overlay.querySelector('.panel-drawer'));
+    else if (!favSheet.classList.contains('hidden')) trapFocus(e, favSheet.querySelector('.modal-box'));
+    else if (!contactSheet.classList.contains('hidden')) trapFocus(e, contactSheet.querySelector('.modal-box'));
+    else {
+      const mobileMenu = document.getElementById('mobile-menu');
+      if (!mobileMenu.classList.contains('hidden')) trapFocus(e, mobileMenu.querySelector('.mobile-menu-content'));
+    }
+  });
+
   document.getElementById('overlay-close').addEventListener('click', closeOverlay);
   document.querySelector('#overlay .panel-backdrop').addEventListener('click', closeOverlay);
 
@@ -352,15 +572,24 @@ function setupSheets() {
 
   if (mobBtn) {
     mobBtn.addEventListener('click', () => {
+      rememberFocus();
       mobMenu.classList.remove('hidden');
-      document.body.style.overflow = 'hidden';
+      mobBtn.setAttribute('aria-expanded', 'true');
+      focusFirstElement(mobMenu.querySelector('.mobile-menu-content'));
+      syncBodyScrollLock();
     });
   }
 
   function closeMobileMenu() {
-    if (mobMenu) mobMenu.classList.add('hidden');
-    document.body.style.overflow = '';
+    if (mobMenu) {
+      mobMenu.classList.add('hidden');
+      if (mobBtn) mobBtn.setAttribute('aria-expanded', 'false');
+      syncBodyScrollLock();
+      restoreFocus();
+    }
   }
+
+  closeMobileMenuHandler = closeMobileMenu;
 
   if (mobClose) mobClose.addEventListener('click', closeMobileMenu);
   if (mobBackdrop) mobBackdrop.addEventListener('click', closeMobileMenu);
@@ -378,21 +607,29 @@ function setupSheets() {
 
 function openFavSheet() {
   renderFavoritesGrid();
-  document.getElementById('fav-sheet').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  const sheet = document.getElementById('fav-sheet');
+  rememberFocus();
+  sheet.classList.remove('hidden');
+  focusFirstElement(sheet.querySelector('.modal-box'));
+  syncBodyScrollLock();
 }
 function closeFavSheet() {
   document.getElementById('fav-sheet').classList.add('hidden');
-  if (document.getElementById('overlay').classList.contains('hidden')) document.body.style.overflow = '';
+  syncBodyScrollLock();
+  restoreFocus();
 }
 
 function openContactSheet() {
-  document.getElementById('contact-sheet').classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
+  const sheet = document.getElementById('contact-sheet');
+  rememberFocus();
+  sheet.classList.remove('hidden');
+  focusFirstElement(sheet.querySelector('.modal-box'));
+  syncBodyScrollLock();
 }
 function closeContactSheet() {
   document.getElementById('contact-sheet').classList.add('hidden');
-  if (document.getElementById('overlay').classList.contains('hidden')) document.body.style.overflow = '';
+  syncBodyScrollLock();
+  restoreFocus();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -401,16 +638,14 @@ function closeContactSheet() {
 function initDarkMode() {
   const btn = document.getElementById('toggle-dark-mode');
 
-  try {
-    if (localStorage.getItem('theme') === 'dark') {
-      document.body.classList.add('dark');
-    }
-  } catch { }
+  if (safeReadText('theme', 'light') === 'dark') {
+    document.body.classList.add('dark');
+  }
 
   btn.addEventListener('click', () => {
     document.body.classList.toggle('dark');
     const mode = document.body.classList.contains('dark') ? 'dark' : 'light';
-    try { localStorage.setItem('theme', mode); } catch { }
+    safeWriteText('theme', mode);
   });
 }
 
@@ -425,9 +660,20 @@ function setupKeyboardShortcuts() {
     }
     if (e.key === 'Escape') {
       document.getElementById('search-bar').blur();
-      closeOverlay();
-      closeFavSheet();
-      closeContactSheet();
+      const overlay = document.getElementById('overlay');
+      const favSheet = document.getElementById('fav-sheet');
+      const contactSheet = document.getElementById('contact-sheet');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      if (!mobileMenu.classList.contains('hidden') && closeMobileMenuHandler) {
+        closeMobileMenuHandler();
+      } else if (!overlay.classList.contains('hidden')) {
+        closeOverlay();
+      } else if (!favSheet.classList.contains('hidden')) {
+        closeFavSheet();
+      } else if (!contactSheet.classList.contains('hidden')) {
+        closeContactSheet();
+      }
     }
   });
 }

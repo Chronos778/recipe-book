@@ -1,10 +1,12 @@
-const CACHE_NAME = 'recipe-book-cache-v3';
+const CACHE_NAME = 'recipe-book-cache-v4';
 const urlsToCache = [
     '/',
     '/index.html',
     '/styles.css',
     '/main.js',
     '/recipes.js',
+    '/manifest.json',
+    '/service-worker.js',
 ];
 
 self.addEventListener('install', (event) => {
@@ -16,18 +18,39 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    const { request } = event;
+
+    if (request.destination === 'image') {
+        event.respondWith(
+            caches.match(request).then((cachedResponse) => {
+                if (cachedResponse) return cachedResponse;
+
+                return fetch(request).then((networkResponse) => {
+                    if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+                        const responseToCache = networkResponse.clone();
+                        caches.open(CACHE_NAME).then((cache) => {
+                            cache.put(request, responseToCache);
+                        });
+                    }
+                    return networkResponse;
+                });
+            })
+        );
+        return;
+    }
+
     event.respondWith(
-        caches.match(event.request).then((response) => {
+        caches.match(request).then((response) => {
             if (response) {
                 return response;
             }
-            return fetch(event.request).then((response) => {
+            return fetch(request).then((response) => {
                 if (!response || response.status !== 200 || response.type !== 'basic') {
                     return response;
                 }
                 const responseToCache = response.clone();
                 caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(event.request, responseToCache);
+                    cache.put(request, responseToCache);
                 });
                 return response;
             });

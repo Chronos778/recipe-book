@@ -15,6 +15,7 @@
     href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap"
     rel="stylesheet">
   <link rel="icon" href="images/icon.png" type="image/x-icon">
+  <link rel="apple-touch-icon" href="images/icon.png">
   <meta property="og:title" content="Cooked's">
   <meta property="og:description" content="Discover a variety of delicious recipes that you can try at home.">
   <meta property="og:image" content="https://sc.is-a.dev/recipe-book/images/og-image.png">
@@ -27,7 +28,7 @@
 <body>
 
   <!-- ═══ NAV ═══ -->
-  <nav id="topnav">
+  <nav id="topnav" aria-label="Primary">
     <a class="brand" href="#">Cooked's</a>
     <div class="nav-spacer"></div>
     <div class="search-box">
@@ -36,19 +37,20 @@
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-3.5-3.5" />
       </svg>
+      <label for="search-bar" class="sr-only">Search recipes</label>
       <input type="text" id="search-bar" placeholder="Search recipes…" aria-label="Search recipes" autocomplete="off">
     </div>
     <div class="nav-actions">
-      <button id="btn-favs" class="nav-link" aria-label="Saved recipes">
+      <button id="btn-favs" type="button" class="nav-link" aria-label="Saved recipes">
         Saved
         <span id="fav-count" class="count-pill hidden">0</span>
       </button>
-      <button id="btn-contact" class="nav-link">Contact</button>
-      <button id="toggle-dark-mode" class="nav-link nav-theme" aria-label="Toggle theme">
+      <button id="btn-contact" type="button" class="nav-link">Contact</button>
+      <button id="toggle-dark-mode" type="button" class="nav-link nav-theme" aria-label="Toggle theme">
         <span class="theme-light-label">Dark</span>
         <span class="theme-dark-label">Light</span>
       </button>
-      <button id="mobile-menu-btn" class="nav-link mobile-only" aria-label="Menu">
+      <button id="mobile-menu-btn" type="button" class="nav-link mobile-only" aria-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
           stroke-linecap="round" stroke-linejoin="round">
           <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -60,14 +62,15 @@
   </nav>
 
   <!-- ═══ MOBILE MENU ═══ -->
-  <div id="mobile-menu" class="mobile-menu hidden">
+  <div id="mobile-menu" class="mobile-menu hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-menu-title">
     <div class="mobile-menu-backdrop"></div>
-    <div class="mobile-menu-content">
-      <button id="mobile-menu-close" class="modal-x" aria-label="Close">&times;</button>
+    <div class="mobile-menu-content" tabindex="-1">
+      <h2 id="mobile-menu-title" class="sr-only">Mobile menu</h2>
+      <button id="mobile-menu-close" type="button" class="modal-x" aria-label="Close">&times;</button>
       <nav class="mobile-nav">
-        <button id="mob-favs" class="mobile-link">Saved Recipes <span id="mob-fav-count"
+        <button id="mob-favs" type="button" class="mobile-link">Saved Recipes <span id="mob-fav-count"
             class="count-pill hidden">0</span></button>
-        <button id="mob-contact" class="mobile-link">Contact</button>
+        <button id="mob-contact" type="button" class="mobile-link">Contact</button>
       </nav>
     </div>
   </div>
@@ -88,29 +91,35 @@
 
   <!-- ═══ CATEGORIES ═══ -->
   <div id="cat-bar">
-    <div class="cat-row">
-      <button class="cat active" data-category="all">All</button>
-      <button class="cat" data-category="breakfast">Breakfast</button>
-      <button class="cat" data-category="lunch">Lunch</button>
-      <button class="cat" data-category="dinner">Dinner</button>
-      <button class="cat" data-category="dessert">Dessert</button>
+    <div class="cat-row" role="toolbar" aria-label="Recipe categories">
+      <button type="button" class="cat active" data-category="all" aria-current="true">All</button>
+      <button type="button" class="cat" data-category="breakfast" aria-current="false">Breakfast</button>
+      <button type="button" class="cat" data-category="lunch" aria-current="false">Lunch</button>
+      <button type="button" class="cat" data-category="dinner" aria-current="false">Dinner</button>
+      <button type="button" class="cat" data-category="dessert" aria-current="false">Dessert</button>
     </div>
-    <span id="recipe-count" class="meta-count"></span>
+    <span id="recipe-count" class="meta-count" aria-live="polite"></span>
   </div>
+
+  <section id="recently-viewed" class="recently-viewed hidden" aria-labelledby="recently-viewed-title">
+    <h2 id="recently-viewed-title">Recently Viewed</h2>
+    <div id="recently-viewed-list" class="recently-viewed-list"></div>
+  </section>
+
   <h2 id="recipes-title" class="sr-only">All recipes</h2>
 
   <!-- ═══ RECIPES ═══ -->
   <main id="main">
     <div id="recipes" class="recipe-grid"></div>
-    <p id="no-results" class="hidden empty">No recipes match your search.</p>
+    <p id="no-results" class="hidden empty" aria-live="polite">No recipes match your search.</p>
   </main>
 
   <!-- ═══ DETAIL PANEL ═══ -->
-  <div id="overlay" class="panel-overlay hidden" role="dialog" aria-modal="true">
+  <div id="overlay" class="panel-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="recipe-detail-title">
     <div class="panel-backdrop"></div>
-    <aside class="panel-drawer">
+    <aside class="panel-drawer" tabindex="-1">
       <div class="panel-top">
-        <button id="overlay-close" class="panel-back" aria-label="Close">
+        <button id="overlay-close" type="button" class="panel-back" aria-label="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round">
             <path d="M19 12H5" />
@@ -124,12 +133,12 @@
   </div>
 
   <!-- ═══ FAVORITES MODAL ═══ -->
-  <div id="fav-sheet" class="modal-wrap hidden">
+  <div id="fav-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="fav-sheet-title">
     <div class="modal-backdrop"></div>
-    <div class="modal-box">
+    <div class="modal-box" tabindex="-1">
       <div class="modal-head">
-        <h2>Saved Recipes</h2>
-        <button id="fav-sheet-close" class="modal-x" aria-label="Close">&times;</button>
+        <h2 id="fav-sheet-title">Saved Recipes</h2>
+        <button id="fav-sheet-close" type="button" class="modal-x" aria-label="Close">&times;</button>
       </div>
       <div id="favorites-grid" class="fav-grid"></div>
       <p id="no-favorites" class="empty">No saved recipes yet.</p>
@@ -137,12 +146,12 @@
   </div>
 
   <!-- ═══ CONTACT MODAL ═══ -->
-  <div id="contact-sheet" class="modal-wrap hidden">
+  <div id="contact-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="contact-sheet-title">
     <div class="modal-backdrop"></div>
-    <div class="modal-box modal-box--narrow">
+    <div class="modal-box modal-box--narrow" tabindex="-1">
       <div class="modal-head">
-        <h2>Get in Touch</h2>
-        <button id="contact-sheet-close" class="modal-x" aria-label="Close">&times;</button>
+        <h2 id="contact-sheet-title">Get in Touch</h2>
+        <button id="contact-sheet-close" type="button" class="modal-x" aria-label="Close">&times;</button>
       </div>
       <p class="modal-text">Have a recipe idea or feedback? We'd love to hear from you.</p>
       <a class="discord-btn" href="https://discord.gg/UVWjuAh" target="_blank" rel="noopener">
