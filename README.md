@@ -23,6 +23,12 @@ Welcome to Cooking for Cooked's! This website is a comprehensive recipe book whe
 - **Responsive Design**: Mobile-friendly design.
 - **Offline Support**: Service worker for offline capabilities.
 - **Keyboard & Accessibility Improvements**: Better dialog semantics, focus handling, and keyboard navigation for recipe cards and saved items.
+- **Portion Scaler**: Dynamically adjust ingredient quantities by changing the serving size.
+- **Shopping List Generator**: Add recipes to a comprehensive shopping cart to manage your grocery list.
+- **Step-by-Step Cooking Mode**: A distraction-free, full-screen overlay for following recipe instructions.
+- **Built-in Timers**: Clickable time phrases in recipes that start an in-app countdown timer.
+- **Print / PDF Export**: Printer-friendly CSS layout that strips out unnecessary UI elements for a clean physical copy.
+
 
 ## Installation
 

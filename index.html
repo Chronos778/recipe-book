@@ -16,7 +16,7 @@
     rel="stylesheet">
   <link rel="icon" href="images/icon.png" type="image/x-icon">
   <link rel="apple-touch-icon" href="images/icon.png">
-  <meta property="og:title" content="Cooked's">
+  <meta property="og:title" content="Cook Book">
   <meta property="og:description" content="Discover a variety of delicious recipes that you can try at home.">
   <meta property="og:image" content="https://sc.is-a.dev/recipe-book/images/og-image.png">
   <meta property="og:url" content="https://sc.is-a.dev/recipe-book">
@@ -45,6 +45,10 @@
         Saved
         <span id="fav-count" class="count-pill hidden">0</span>
       </button>
+      <button id="btn-cart" type="button" class="nav-link" aria-label="Shopping List">
+        Cart
+        <span id="cart-count" class="count-pill hidden">0</span>
+      </button>
       <button id="btn-contact" type="button" class="nav-link">Contact</button>
       <button id="toggle-dark-mode" type="button" class="nav-link nav-theme" aria-label="Toggle theme">
         <span class="theme-light-label">Dark</span>
@@ -69,6 +73,8 @@
       <button id="mobile-menu-close" type="button" class="modal-x" aria-label="Close">&times;</button>
       <nav class="mobile-nav">
         <button id="mob-favs" type="button" class="mobile-link">Saved Recipes <span id="mob-fav-count"
+            class="count-pill hidden">0</span></button>
+        <button id="mob-cart" type="button" class="mobile-link">Shopping List <span id="mob-cart-count"
             class="count-pill hidden">0</span></button>
         <button id="mob-contact" type="button" class="mobile-link">Contact</button>
       </nav>
@@ -142,6 +148,38 @@
       </div>
       <div id="favorites-grid" class="fav-grid"></div>
       <p id="no-favorites" class="empty">No saved recipes yet.</p>
+    </div>
+  </div>
+
+  <!-- ═══ CART MODAL ═══ -->
+  <div id="cart-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="cart-sheet-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" tabindex="-1">
+      <div class="modal-head">
+        <h2 id="cart-sheet-title">Shopping List</h2>
+        <button id="cart-sheet-close" type="button" class="modal-x" aria-label="Close">&times;</button>
+      </div>
+      <div id="cart-items" class="cart-items"></div>
+      <div class="cart-actions hidden" id="cart-actions">
+         <button id="cart-clear" class="btn-save">Clear List</button>
+      </div>
+      <p id="no-cart" class="empty">Your shopping list is empty.</p>
+    </div>
+  </div>
+
+  <!-- ═══ COOKING MODE OVERLAY ═══ -->
+  <div id="cooking-mode-overlay" class="cooking-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="cooking-mode-title">
+    <div class="cooking-top">
+      <button id="cooking-close" type="button" class="cooking-btn-secondary" aria-label="Close Cooking Mode">&times; Exit</button>
+      <div id="cooking-progress">Step 1 of 5</div>
+    </div>
+    <div class="cooking-body">
+      <h2 id="cooking-mode-title" class="cooking-recipe-title"></h2>
+      <p id="cooking-step-text" class="cooking-step-text"></p>
+    </div>
+    <div class="cooking-bottom">
+      <button id="cooking-prev" type="button" class="cooking-btn-secondary">Previous</button>
+      <button id="cooking-next" type="button" class="cooking-btn-primary">Next Step</button>
     </div>
   </div>
 
