@@ -96,6 +96,8 @@ function syncBodyScrollLock() {
     !document.getElementById('overlay').classList.contains('hidden') ||
     !document.getElementById('fav-sheet').classList.contains('hidden') ||
     !document.getElementById('contact-sheet').classList.contains('hidden') ||
+    !document.getElementById('cart-sheet').classList.contains('hidden') ||
+    !document.getElementById('cooking-mode-overlay').classList.contains('hidden') ||
     !document.getElementById('mobile-menu').classList.contains('hidden');
   document.body.style.overflow = hasOpenLayer ? 'hidden' : '';
 }
@@ -175,7 +177,11 @@ function renderRecentViews() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'recent-pill';
-    button.innerHTML = `<span class="cat-dot" style="color:${catColor(recipe.category)}"></span>${recipe.title}`;
+    const dot = document.createElement('span');
+    dot.className = 'cat-dot';
+    dot.style.color = catColor(recipe.category);
+    button.appendChild(dot);
+    button.appendChild(document.createTextNode(recipe.title));
     button.addEventListener('click', () => viewRecipe(id));
     list.appendChild(button);
   });
@@ -258,12 +264,18 @@ function renderRecipeCards() {
     card.querySelector('.card-cart').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleCart(id);
-      renderRecipeCards(); // Re-render to update cart icon states
-      updateCartBadge();
-      if (getCart().includes(id)) {
-        const rect = e.target.getBoundingClientRect();
+      const inCart = getCart().includes(id);
+      const btn = e.currentTarget;
+      if (inCart) {
+        btn.classList.add('in-cart');
+        btn.setAttribute('aria-label', 'Remove from cart');
+        const rect = btn.getBoundingClientRect();
         triggerExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      } else {
+        btn.classList.remove('in-cart');
+        btn.setAttribute('aria-label', 'Add to cart');
       }
+      updateCartBadge();
     });
 
     container.appendChild(card);
@@ -366,10 +378,12 @@ function viewRecipe(recipeId) {
     </div>
   `;
 
-  overlay.classList.remove('hidden');
-  rememberFocus();
-  focusFirstElement(overlay.querySelector('.panel-drawer'));
-  syncBodyScrollLock();
+  if (overlay.classList.contains('hidden')) {
+    rememberFocus();
+    overlay.classList.remove('hidden');
+    focusFirstElement(overlay.querySelector('.panel-drawer'));
+    syncBodyScrollLock();
+  }
 
   // Attach serving button listeners
   let activeServings = meta.servings;
@@ -692,8 +706,11 @@ function openCookingMode(recipe) {
   document.getElementById('cooking-mode-title').textContent = recipe.title;
   updateCookingModeUI();
   
-  document.getElementById('cooking-mode-overlay').classList.remove('hidden');
-  document.body.style.overflow = 'hidden'; // Keep body secure
+  const overlay = document.getElementById('cooking-mode-overlay');
+  rememberFocus();
+  overlay.classList.remove('hidden');
+  focusFirstElement(overlay);
+  syncBodyScrollLock();
   requestWakeLock();
 }
 
@@ -701,6 +718,7 @@ function closeCookingMode() {
   document.getElementById('cooking-mode-overlay').classList.add('hidden');
   // Only restore overflow if no other sheets are open
   syncBodyScrollLock();
+  restoreFocus();
   releaseWakeLock();
 }
 
@@ -737,12 +755,37 @@ document.getElementById('cooking-next').addEventListener('click', () => {
 /* ═══════════════════════════════════════════════════════════════
    BUILT-IN TIMERS
    ═══════════════════════════════════════════════════════════════ */
+function escapeHtml(text) {
+  return String(text).replace(/[&<>"']/g, (ch) => {
+    switch (ch) {
+      case '&': return '&amp;';
+      case '<': return '&lt;';
+      case '>': return '&gt;';
+      case '"': return '&quot;';
+      case '\'': return '&#39;';
+      default: return ch;
+    }
+  });
+}
+
 function formatInstructions(text) {
-  return text
-    .replace(/(\d+)\s*(min|minute|hr|hour)s?/gi, (match, num, unit) => {
-      return `<button type="button" class="timer-btn" data-time="${num}" data-unit="${unit}">${match}</button>`;
-    })
-    .replace(/\n/g, '<br>');
+  if (text == null) return '';
+  const timeRegex = /(\d+)\s*(min|minute|hr|hour)s?/gi;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = timeRegex.exec(text)) !== null) {
+    const fullMatch = match[0];
+    const num = match[1];
+    const unit = match[2];
+    const before = text.slice(lastIndex, match.index);
+    result += escapeHtml(before);
+    const safeLabel = escapeHtml(fullMatch);
+    result += `<button type="button" class="timer-btn" data-time="${String(num)}" data-unit="${String(unit)}">${safeLabel}</button>`;
+    lastIndex = match.index + fullMatch.length;
+  }
+  result += escapeHtml(text.slice(lastIndex));
+  return result.replace(/\n/g, '<br>');
 }
 
 let activeTimers = [];

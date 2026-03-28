@@ -1,12 +1,12 @@
 const CACHE_NAME = 'recipe-book-cache-v4';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/styles.css',
-    '/main.js',
-    '/recipes.js',
-    '/manifest.json',
-    '/service-worker.js',
+    new URL('./', self.location).toString(),
+    new URL('./index.html', self.location).toString(),
+    new URL('./styles.css', self.location).toString(),
+    new URL('./main.js', self.location).toString(),
+    new URL('./recipes.js', self.location).toString(),
+    new URL('./manifest.json', self.location).toString(),
+    new URL('./service-worker.js', self.location).toString(),
 ];
 
 self.addEventListener('install', (event) => {
@@ -28,9 +28,9 @@ self.addEventListener('fetch', (event) => {
                 return fetch(request).then((networkResponse) => {
                     if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
                         const responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME).then((cache) => {
+                        event.waitUntil(caches.open(CACHE_NAME).then((cache) => {
                             cache.put(request, responseToCache);
-                        });
+                        }));
                     }
                     return networkResponse;
                 });
