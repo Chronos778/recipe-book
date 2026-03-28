@@ -13,8 +13,11 @@ export const recipes = {
             '1 cup fresh blueberries'
         ],
         instructions: '1. Whisk dry ingredients in a bowl.\n2. Whisk wet ingredients in another bowl.\n3. Combine wet and dry mixtures; fold in blueberries.\n4. Cook on a hot buttered griddle until golden brown.',
-        nutrition: 'Calories: 350, Protein: 8g, Fat: 10g, Carbs: 55g',
-        category: 'breakfast'
+        macros: { calories: 350, protein: 8, fat: 10, carbs: 55 },
+        category: 'breakfast',
+        servings: 2,
+        totalTime: '20 min',
+        difficulty: 'Easy'
     },
     recipe2: {
         title: 'Grilled Salmon Salad',
@@ -30,8 +33,11 @@ export const recipes = {
             '1 tbsp lemon juice'
         ],
         instructions: '1. Season salmon with salt and pepper.\n2. Grill salmon for 4-5 minutes per side.\n3. Toss greens and veggies with oil and lemon juice.\n4. Top salad with grilled salmon.',
-        nutrition: 'Calories: 450, Protein: 40g, Fat: 25g, Carbs: 10g',
-        category: 'lunch'
+        macros: { calories: 450, protein: 40, fat: 25, carbs: 10 },
+        category: 'lunch',
+        servings: 2,
+        totalTime: '25 min',
+        difficulty: 'Medium'
     },
     recipe3: {
         title: 'Chocolate Lava Cake',
@@ -46,8 +52,11 @@ export const recipes = {
             'Cocoa powder for dusting'
         ],
         instructions: '1. Melt chocolate and butter together.\n2. Whisk eggs and sugar until pale.\n3. Fold chocolate into egg mixture, then fold in flour.\n4. Pour into greased ramekins and bake at 425°F (220°C) for 13 mins.',
-        nutrition: 'Calories: 520, Protein: 7g, Fat: 34g, Carbs: 50g',
-        category: 'dessert'
+        macros: { calories: 520, protein: 7, fat: 34, carbs: 50 },
+        category: 'dessert',
+        servings: 4,
+        totalTime: '30 min',
+        difficulty: 'Medium'
     },
     recipe4: {
         title: 'Creamy Pesto Pasta',
@@ -62,8 +71,11 @@ export const recipes = {
             'Salt and pepper to taste'
         ],
         instructions: '1. Cook pasta according to package directions.\n2. Simmer pesto and cream in a saucepan for 2 mins.\n3. Toss pasta with the sauce.\n4. Garnish with parmesan and pine nuts.',
-        nutrition: 'Calories: 600, Protein: 18g, Fat: 35g, Carbs: 70g',
-        category: 'dinner'
+        macros: { calories: 600, protein: 18, fat: 35, carbs: 70 },
+        category: 'dinner',
+        servings: 4,
+        totalTime: '30 min',
+        difficulty: 'Easy'
     },
     recipe5: {
         title: 'Avocado Toast',
@@ -78,8 +90,11 @@ export const recipes = {
             'Sea salt and black pepper'
         ],
         instructions: '1. Toast the bread until golden.\n2. Mash avocado with lemon juice, salt, and pepper.\n3. Spread onto toast.\n4. Top with radish slices and chili flakes.',
-        nutrition: 'Calories: 320, Protein: 9g, Fat: 18g, Carbs: 35g',
-        category: 'breakfast'
+        macros: { calories: 320, protein: 9, fat: 18, carbs: 35 },
+        category: 'breakfast',
+        servings: 2,
+        totalTime: '10 min',
+        difficulty: 'Easy'
     },
     recipe7: {
         title: 'Spaghetti Carbonara',
@@ -94,8 +109,11 @@ export const recipes = {
             'Freshly ground black pepper'
         ],
         instructions: '1. Cook pasta in salted water until al dente.\n2. Crispen pancetta in a pan.\n3. Whisk eggs and cheese in a bowl.\n4. Toss hot pasta with pancetta, then remove from heat and mix in egg mixture quickly to create a creamy sauce.',
-        nutrition: 'Calories: 400, Protein: 15g, Fat: 20g, Carbs: 45g',
-        category: 'dinner'
+        macros: { calories: 400, protein: 15, fat: 20, carbs: 45 },
+        category: 'dinner',
+        servings: 4,
+        totalTime: '25 min',
+        difficulty: 'Medium'
     },
     recipe8: {
         title: 'Classic Caesar Salad',
@@ -110,8 +128,11 @@ export const recipes = {
             'Anchovy fillets (optional)'
         ],
         instructions: '1. Wash and dry lettuce thoroughly.\n2. Toss lettuce with dressing until coated.\n3. Add croutons and parmesan cheese.\n4. Serve immediately with a squeeze of lemon.',
-        nutrition: 'Calories: 300, Protein: 8g, Fat: 22g, Carbs: 12g',
-        category: 'lunch'
+        macros: { calories: 300, protein: 8, fat: 22, carbs: 12 },
+        category: 'lunch',
+        servings: 2,
+        totalTime: '15 min',
+        difficulty: 'Easy'
     },
     recipe9: {
         title: 'Vegetable Stir Fry',
@@ -127,8 +148,11 @@ export const recipes = {
             'Rice for serving'
         ],
         instructions: '1. Heat oil in a wok or large pan.\n2. Stir-fry garlic and ginger for 30 seconds.\n3. Add vegetables and stir-fry for 5-7 minutes until tender-crisp.\n4. Stir in soy sauce and sesame oil; serve over rice.',
-        nutrition: 'Calories: 250, Protein: 6g, Fat: 10g, Carbs: 35g',
-        category: 'dinner'
+        macros: { calories: 250, protein: 6, fat: 10, carbs: 35 },
+        category: 'dinner',
+        servings: 3,
+        totalTime: '20 min',
+        difficulty: 'Easy'
     },
     recipe10: {
         title: 'Mushroom Risotto',
@@ -144,8 +168,11 @@ export const recipes = {
             '1/4 cup Parmesan cheese'
         ],
         instructions: '1. Sauté onion and mushrooms in butter until soft.\n2. Add rice and toast for 1 minute.\n3. Add wine and cook until absorbed.\n4. Gradually add warm broth, one ladle at a time, stirring constantly until rice is creamy and tender. Stir in cheese.',
-        nutrition: 'Calories: 420, Protein: 10g, Fat: 14g, Carbs: 58g',
-        category: 'dinner'
+        macros: { calories: 420, protein: 10, fat: 14, carbs: 58 },
+        category: 'dinner',
+        servings: 4,
+        totalTime: '40 min',
+        difficulty: 'Hard'
     },
     recipe11: {
         title: 'Greek Yogurt Parfait',
@@ -160,8 +187,11 @@ export const recipes = {
             'Mint leaves for garnish'
         ],
         instructions: '1. Place half of the yogurt in a glass.\n2. Add a layer of granola and fruit.\n3. Repeat layers.\n4. Drizzle with honey and top with chia seeds.',
-        nutrition: 'Calories: 300, Protein: 15g, Fat: 8g, Carbs: 40g',
-        category: 'breakfast'
+        macros: { calories: 300, protein: 15, fat: 8, carbs: 40 },
+        category: 'breakfast',
+        servings: 2,
+        totalTime: '10 min',
+        difficulty: 'Easy'
     },
     recipe12: {
         title: 'Homemade Beef Tacos',
@@ -177,8 +207,11 @@ export const recipes = {
             'Salsa'
         ],
         instructions: '1. Brown ground beef in a skillet; drain fat.\n2. Add taco seasoning and water according to packet instructions; simmer.\n3. Warm tortillas.\n4. Assemble tacos with beef and toppings.',
-        nutrition: 'Calories: 500, Protein: 25g, Fat: 22g, Carbs: 45g',
-        category: 'dinner'
+        macros: { calories: 500, protein: 25, fat: 22, carbs: 45 },
+        category: 'dinner',
+        servings: 4,
+        totalTime: '30 min',
+        difficulty: 'Easy'
     },
     recipe13: {
         title: 'Caprese Salad',
@@ -193,8 +226,11 @@ export const recipes = {
             'Salt and pepper'
         ],
         instructions: '1. Arrange tomato and mozzarella slices on a platter.\n2. Tuck basil leaves between slices.\n3. Drizzle with olive oil and balsamic glaze.\n4. Season with salt and pepper.',
-        nutrition: 'Calories: 280, Protein: 12g, Fat: 20g, Carbs: 8g',
-        category: 'lunch'
+        macros: { calories: 280, protein: 12, fat: 20, carbs: 8 },
+        category: 'lunch',
+        servings: 2,
+        totalTime: '15 min',
+        difficulty: 'Easy'
     },
     recipe14: {
         title: 'Apple Pie',
@@ -209,8 +245,11 @@ export const recipes = {
             '1 egg (for wash)'
         ],
         instructions: '1. Toss apples with sugar and cinnamon.\n2. Place bottom crust in pie dish and fill with apples. Dot with butter.\n3. Top with second crust, seal edges, and cut vents.\n4. Brush with egg wash and bake at 375°F (190°C) for 50 mins.',
-        nutrition: 'Calories: 350, Protein: 3g, Fat: 15g, Carbs: 55g',
-        category: 'dessert'
+        macros: { calories: 350, protein: 3, fat: 15, carbs: 55 },
+        category: 'dessert',
+        servings: 8,
+        totalTime: '80 min',
+        difficulty: 'Medium'
     },
     recipe15: {
         title: 'Banana Bread',
@@ -226,8 +265,11 @@ export const recipes = {
             '1 1/2 cups all-purpose flour'
         ],
         instructions: '1. Mix mashed bananas with butter.\n2. Stir in sugar, egg, and vanilla.\n3. Sprinkle baking soda and salt over mixture and mix.\n4. Stir in flour. Pour into loaf pan and bake at 350°F (175°C) for 60 mins.',
-        nutrition: 'Calories: 220, Protein: 4g, Fat: 8g, Carbs: 35g',
-        category: 'breakfast'
+        macros: { calories: 220, protein: 4, fat: 8, carbs: 35 },
+        category: 'breakfast',
+        servings: 8,
+        totalTime: '75 min',
+        difficulty: 'Easy'
     },
     recipe16: {
         title: 'Classic French Toast',
@@ -242,8 +284,11 @@ export const recipes = {
             'Butter for frying'
         ],
         instructions: '1. Whisk eggs, milk, vanilla, and cinnamon in a shallow dish.\n2. Dip bread slices into mixture, coating both sides.\n3. Cook on a buttered skillet over medium heat until golden brown on both sides.\n4. Serve with syrup and fruit.',
-        nutrition: 'Calories: 380, Protein: 12g, Fat: 14g, Carbs: 45g',
-        category: 'breakfast'
+        macros: { calories: 380, protein: 12, fat: 14, carbs: 45 },
+        category: 'breakfast',
+        servings: 2,
+        totalTime: '20 min',
+        difficulty: 'Easy'
     }
 };
 

@@ -1,6 +1,6 @@
 {
-    "name": "Cooking for Cooked's",
-    "short_name": "Cooked's",
+    "name": "Cooking book",
+    "short_name": "Cook book",
     "start_url": "./index.html",
     "display": "standalone",
     "background_color": "#ff6347",

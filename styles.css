@@ -135,6 +135,15 @@ button {
   font-size: inherit;
 }
 
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.recipe-card:focus-visible,
+.fav-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
 img {
   display: block;
   max-width: 100%;
@@ -485,6 +494,49 @@ body.dark .theme-dark-label {
   color: var(--ink-4);
 }
 
+/* Recently viewed */
+.recently-viewed {
+  padding: 0 var(--page-px) 24px;
+  max-width: calc(var(--max-w) + var(--page-px) * 2);
+  margin: 0 auto;
+}
+
+.recently-viewed h2 {
+  font-family: var(--f-body);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  margin-bottom: 10px;
+}
+
+.recently-viewed-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: 0.78rem;
+  font-weight: 500;
+  transition: border-color var(--dur), color var(--dur), background var(--dur);
+}
+
+.recent-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--ink);
+  background: var(--surface-dim);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RECIPE GRID
    ═══════════════════════════════════════════════════════════════ */
@@ -525,6 +577,10 @@ body.dark .theme-dark-label {
 
 .recipe-card:active {
   transform: translateY(0);
+}
+
+.recipe-card:focus-visible {
+  box-shadow: var(--sh-md);
 }
 
 
@@ -592,8 +648,14 @@ body.dark .theme-dark-label {
   font-size: 0.86rem;
   color: var(--ink-2);
   line-height: 1.5;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
   flex: 1;
+}
+
+.card-meta {
+  font-size: 0.73rem;
+  color: var(--ink-3);
+  margin-bottom: 14px;
 }
 
 .card-cta {
@@ -707,11 +769,346 @@ body.dark .theme-dark-label {
   font-size: 0.92rem;
   color: var(--ink-2);
   line-height: 1.7;
-  margin-bottom: 32px;
+  margin-bottom: 18px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.meta-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-dim);
+  color: var(--ink-2);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .detail-section {
   margin-bottom: 28px;
+}
+
+.detail-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.servings-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-dim);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.serve-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+  transition: color var(--dur), transform var(--dur), box-shadow var(--dur);
+  box-shadow: var(--sh-xs);
+  font-size: 1.1rem;
+}
+
+.serve-btn:hover {
+  color: var(--ink);
+  transform: scale(1.05);
+  box-shadow: var(--sh-sm);
+}
+
+.serve-btn:active {
+  transform: scale(0.95);
+}
+
+.serve-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 68px;
+  text-align: center;
+}
+
+/* Card Actions (Fav + Cart) */
+.card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.card-cart {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--ink-4);
+  transition: color var(--dur), background var(--dur), transform var(--dur);
+}
+
+.card-cart:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.card-cart.in-cart {
+  color: var(--accent);
+}
+
+.card-cart.in-cart:hover {
+  transform: scale(1.08);
+}
+
+/* Cart Items List */
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cart-recipe-group {
+  margin-bottom: 16px;
+}
+
+.cart-recipe-title {
+  font-family: var(--f-display);
+  font-size: 1.2rem;
+  color: var(--ink);
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.cart-ingredient {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 0.9rem;
+  color: var(--ink-2);
+}
+
+.cart-ingredient input {
+  margin-top: 3px;
+}
+
+.cart-actions {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  text-align: right;
+}
+
+/* Cooking Mode Styles */
+.cooking-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn var(--dur-md) var(--ease) both;
+}
+
+.cooking-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 30px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cooking-btn-secondary {
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink-2);
+  background: var(--surface-dim);
+  border-radius: var(--r);
+  transition: background var(--dur), color var(--dur);
+}
+
+.cooking-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cooking-btn-secondary:not(:disabled):hover {
+  background: var(--border);
+  color: var(--ink);
+}
+
+#cooking-progress {
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.cooking-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.cooking-recipe-title {
+  font-family: var(--f-display);
+  font-size: 1.5rem;
+  color: var(--ink-3);
+  margin-bottom: 40px;
+}
+
+.cooking-step-text {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  line-height: 1.4;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.cooking-bottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 30px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.cooking-btn-primary {
+  padding: 14px 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border-radius: var(--r);
+  transition: background var(--dur), transform var(--dur);
+}
+
+.cooking-btn-primary:hover {
+  background: var(--accent-hover);
+  transform: translateY(-2px);
+}
+
+/* Timers */
+.timer-btn {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+  font-size: 0.9em;
+  border-radius: var(--r-sm);
+  transition: all var(--dur) var(--ease);
+  box-shadow: 0 0 0 1px transparent;
+}
+
+.timer-btn:hover {
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--accent);
+  transform: translateY(-1px);
+}
+
+.active-timers-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.active-timer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-md);
+  position: relative;
+  overflow: hidden;
+  animation: enter var(--dur-md) var(--ease) both;
+}
+
+.active-timer--done {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.timer-ring-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  background: var(--surface-dim);
+}
+
+.timer-ring-fg {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+.timer-text {
+  font-family: var(--f-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.active-timer--done .timer-text {
+  color: #fff;
+}
+
+.timer-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--ink-3);
+  font-size: 1.2rem;
+  transition: background var(--dur), color var(--dur);
+}
+
+.timer-close:hover {
+  background: var(--surface-dim);
+  color: var(--ink);
+}
+
+.active-timer--done .timer-close {
+  color: #fff;
+  opacity: 0.8;
+}
+
+.active-timer--done .timer-close:hover {
+  background: rgba(0,0,0,0.2);
+  opacity: 1;
 }
 
 .detail-section h3 {
@@ -762,12 +1159,13 @@ body.dark .theme-dark-label {
   gap: 12px;
   cursor: pointer;
   width: 100%;
+  -webkit-user-select: none;
   user-select: none;
 }
 
 .ing-label input[type="checkbox"] {
-  appearance: none;
   -webkit-appearance: none;
+  appearance: none;
   width: 20px;
   height: 20px;
   border: 2px solid var(--border-strong);
@@ -1020,6 +1418,95 @@ body.dark .theme-dark-label {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   MACROS
+   ═══════════════════════════════════════════════════════════════ */
+.macro-display {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: var(--surface);
+  padding: 24px;
+  border-radius: var(--rad-md);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+  margin-top: 15px;
+  border: 1px solid var(--border);
+}
+
+.macro-chart {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.macro-donut {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: background 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.macro-center {
+  position: absolute;
+  inset: 15px;
+  background: var(--surface);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.macro-cals {
+  font-family: var(--f-display);
+  font-size: 1.8rem;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.macro-cals-lbl {
+  font-size: 0.75rem;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+.macro-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.macro-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  color: var(--ink-2);
+}
+
+.macro-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.macro-lbl {
+  flex-grow: 1;
+}
+
+.macro-val {
+  color: var(--ink);
+  font-family: var(--f-base);
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    RESPONSIVE
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
@@ -1174,6 +1661,72 @@ body.dark .theme-dark-label {
   .detail-title {
     font-size: 1.5rem;
   }
+
+  .detail-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .detail-toolbar > button {
+    flex: 1 1 calc(50% - 4px);
+    text-align: center;
+  }
+
+  .cooking-top {
+    padding: 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .cooking-body {
+    padding: 20px;
+  }
+  
+  .cooking-recipe-title {
+    margin-bottom: 20px;
+  }
+  
+  .cooking-bottom {
+    padding: 15px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cooking-btn-secondary,
+  .cooking-btn-primary {
+    width: 100%;
+  }
+
+  .active-timers-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .active-timer {
+    padding: 8px 12px;
+  }
+
+  .timer-text {
+    font-size: 1.1rem;
+  }
+
+  .servings-control {
+    gap: 6px;
+  }
+
+  .serve-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .macro-display {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+  .macro-legend {
+    width: 100%;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1184,21 +1737,59 @@ body.dark .theme-dark-label {
   #topnav,
   #page-header,
   #cat-bar,
+  #main,
   #footer,
+  #cart-sheet,
+  #contact-sheet,
+  #fav-sheet,
+  #mobile-menu,
+  #active-timers,
+  #cooking-mode-overlay,
   .detail-toolbar,
   .detail-timer,
   .panel-top,
-  .panel-backdrop {
+  .panel-backdrop,
+  .servings-control {
     display: none !important;
   }
 
-  .panel-overlay,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+  }
+  
+  body.dark {
+    background: #fff !important;
+    color: #000 !important;
+    --ink: #111;
+    --ink-2: #333;
+    --ink-3: #555;
+    --surface: #fff;
+    --border: #ccc;
+  }
+
+  #overlay {
+    position: static !important;
+    background: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
   .panel-drawer {
-    position: static;
-    width: 100%;
-    max-width: 100%;
-    box-shadow: none;
-    border: none;
-    animation: none;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    animation: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  .detail-hero {
+    border-radius: 0;
+    max-height: 400px;
   }
 }

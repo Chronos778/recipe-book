@@ -13,12 +13,23 @@ Welcome to Cooking for Cooked's! This website is a comprehensive recipe book whe
 
 ## Features
 
-- **Recipe Search**: Search for recipes using the search bar.
+- **Recipe Search**: Search recipes by title and ingredient keywords.
 - **Category Filter**: Filter recipes by category.
+- **Category Counts**: See how many recipes are available in each category.
+- **Recipe Metadata Chips**: Cards and detail views now show servings, total time, and difficulty.
+- **Recently Viewed**: Quick-access strip for the most recently opened recipes.
 - **Featured Recipe**: Highlighted featured recipe section.
 - **Dark Mode**: Toggle between light and dark mode.
 - **Responsive Design**: Mobile-friendly design.
 - **Offline Support**: Service worker for offline capabilities.
+- **Keyboard & Accessibility Improvements**: Better dialog semantics, focus handling, and keyboard navigation for recipe cards and saved items.
+- **Portion Scaler**: Dynamically adjust ingredient quantities by changing the serving size.
+- **Shopping List Generator**: Add recipes to a comprehensive shopping cart to manage your grocery list.
+- **Step-by-Step Cooking Mode**: A distraction-free, full-screen overlay for following recipe instructions.
+- **Built-in Timers**: Clickable time phrases in recipes that start an in-app countdown timer.
+- **Print / PDF Export**: Printer-friendly CSS layout that strips out unnecessary UI elements for a clean physical copy.
+- **Dynamic Nutritional Macros**: An automated, responsive CSS donut chart that visually re-calculates Protein, Fat, and Carbs automatically based on the selected serving multiplier.
+
 
 ## Installation
 
@@ -78,15 +89,18 @@ To add a new recipe to the site, follow these steps:
 
 1. **Update `recipes.js`:**
 
-   - Open the `recipes.js` file.
-   - Add a new recipe object to the `recipes` array with the following properties:
-     - `title`: The name of the recipe.
-     - `image`: The path to the recipe image.
-     - `description`: A brief description of the recipe.
-     - `ingredients`: A list of ingredients required for the recipe.
-     - `instructions`: Step-by-step instructions on how to prepare the recipe.
-     - `nutrition`: Nutritional information for the recipe.
-     - `category`: The category of the recipe (e.g., breakfast, dessert).
+    - Open the `recipes.js` file.
+    - Add a new recipe object entry to the `recipes` object with the following properties:
+    - `title`: The name of the recipe.
+    - `image`: The path to the recipe image.
+    - `description`: A brief description of the recipe.
+    - `ingredients`: A list of ingredients required for the recipe.
+    - `instructions`: Step-by-step instructions on how to prepare the recipe.
+    - `nutrition`: Nutritional information for the recipe.
+    - `category`: The category of the recipe (e.g., breakfast, dessert).
+    - `servings`: Number of servings (for example, `2` or `4`).
+    - `totalTime`: Total recipe time (for example, `"25 min"`).
+    - `difficulty`: Difficulty label (`"Easy"`, `"Medium"`, or `"Hard"`).
 
 2. **Add Recipe Image:**
    - Place the recipe image in the `images` folder.
@@ -107,7 +121,10 @@ const recipes = {
         ],
         instructions: 'Mix all ingredients together and cook for 20 minutes.',
         nutrition: 'Calories: 200, Protein: 10g, Fat: 5g, Carbs: 30g',
-        category: 'breakfast'
+        category: 'breakfast',
+        servings: 2,
+        totalTime: '20 min',
+        difficulty: 'Easy'
     },
 };
 ```
