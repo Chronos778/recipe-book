@@ -360,7 +360,7 @@ function viewRecipe(recipeId) {
 
       <div class="detail-section">
         <h3>Nutrition</h3>
-        <div class="detail-nutrition">${r.nutrition}</div>
+        <div id="macro-container" class="detail-nutrition">${renderMacros(r.macros, 1)}</div>
       </div>
 
       <div class="detail-toolbar">
@@ -1095,6 +1095,11 @@ function updateServings(multiplier) {
             </li>
         `;
   }).join('');
+
+  const macroContainer = document.getElementById('macro-container');
+  if (macroContainer && activeRecipe.macros) {
+    macroContainer.innerHTML = renderMacros(activeRecipe.macros, multiplier);
+  }
 }
 
 function parseIngredient(text) {
@@ -1164,5 +1169,52 @@ function triggerExplosion(x, y) {
   }
 }
 
+function renderMacros(macros, multiplier) {
+  if (!macros) return '<p class="empty">Macro data unavailable.</p>';
+  const cal = Math.round(macros.calories * multiplier);
+  const pro = Math.round(macros.protein * multiplier);
+  const fat = Math.round(macros.fat * multiplier);
+  const car = Math.round(macros.carbs * multiplier);
+
+  const calPro = pro * 4;
+  const calFat = fat * 9;
+  const calCar = car * 4;
+  const total = (calPro + calFat + calCar) || 1;
+
+  const pctPro = (calPro / total) * 100;
+  const pctFat = (calFat / total) * 100;
+
+  const grad = `conic-gradient(var(--cat-lunch) 0% ${pctPro}%, var(--cat-breakfast) ${pctPro}% ${pctPro + pctFat}%, var(--cat-dinner) ${pctPro + pctFat}% 100%)`;
+
+  return `
+    <div class="macro-display">
+      <div class="macro-chart">
+        <div class="macro-donut" style="background: ${grad}"></div>
+        <div class="macro-center">
+          <span class="macro-cals">${cal}</span>
+          <span class="macro-cals-lbl">kcal</span>
+        </div>
+      </div>
+      <div class="macro-legend">
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-lunch)"></span>
+          <span class="macro-lbl">Protein</span>
+          <strong class="macro-val">${pro}g</strong>
+        </div>
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-breakfast)"></span>
+          <span class="macro-lbl">Fat</span>
+          <strong class="macro-val">${fat}g</strong>
+        </div>
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-dinner)"></span>
+          <span class="macro-lbl">Carbs</span>
+          <strong class="macro-val">${car}g</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 /* ── Expose globals ── */
-Object.assign(window, { viewRecipe, toggleFavorite, printRecipe, filterRecipes, triggerExplosion, updateServings });
+Object.assign(window, { viewRecipe, toggleFavorite, printRecipe, filterRecipes, triggerExplosion, updateServings, renderMacros });

@@ -28,6 +28,7 @@ Welcome to Cooking for Cooked's! This website is a comprehensive recipe book whe
 - **Step-by-Step Cooking Mode**: A distraction-free, full-screen overlay for following recipe instructions.
 - **Built-in Timers**: Clickable time phrases in recipes that start an in-app countdown timer.
 - **Print / PDF Export**: Printer-friendly CSS layout that strips out unnecessary UI elements for a clean physical copy.
+- **Dynamic Nutritional Macros**: An automated, responsive CSS donut chart that visually re-calculates Protein, Fat, and Carbs automatically based on the selected serving multiplier.
 
 
 ## Installation
