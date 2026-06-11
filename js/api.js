@@ -2,7 +2,7 @@ import { store } from './store.js';
 
 export async function fetchRecipes() {
   try {
-    const response = await fetch('recipes.json');
+    const response = await fetch('data/recipes.json');
     if (!response.ok) throw new Error('Failed to fetch recipes');
     const data = await response.json();
     store.setRecipes(data);

@@ -21,7 +21,7 @@ export function setupRouter() {
     store.setActiveRecipe(recipeId);
     
     // Replace state so we have a clean history starting point
-    window.history.replaceState({ recipe: recipeId }, '', `?recipe=${recipeId}`);
+    window.history.replaceState({ recipe: recipeId }, '', `?recipe=${encodeURIComponent(recipeId)}`);
   } else {
     window.history.replaceState({ recipe: null }, '', window.location.pathname);
   }
@@ -29,7 +29,7 @@ export function setupRouter() {
 
 export function navigateToRecipe(id) {
   store.setActiveRecipe(id);
-  window.history.pushState({ recipe: id }, '', `?recipe=${id}`);
+  window.history.pushState({ recipe: id }, '', `?recipe=${encodeURIComponent(id)}`);
 }
 
 export function navigateHome() {

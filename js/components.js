@@ -3,7 +3,8 @@ import { navigateToRecipe, navigateHome } from './router.js';
 import { 
   getRecipeMeta, catColor, formatInstructions, renderMacros, 
   triggerExplosion, BOOKMARK_IN, BOOKMARK_OUT, parseIngredient, formatAmount,
-  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing
+  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing,
+  escapeHtml
 } from './utils.js';
 
 let activeMultiplier = 1;
@@ -15,6 +16,10 @@ export function setupReactivity() {
   store.subscribe('recipes', () => {
     renderRecipeCards();
     updateCategoryCounts();
+    // Re-render persisting views now that recipes are loaded
+    renderFavoritesGrid();
+    renderCartItems();
+    renderRecentViews();
     if (store.state.activeRecipeId) {
        viewRecipe(store.state.activeRecipeId);
     }
@@ -123,27 +128,27 @@ function renderRecipeCards() {
     
     const card = document.createElement('div');
     card.className = 'recipe-card';
-    card.dataset.category = r.category;
+    card.dataset.category = escapeHtml(r.category);
     card.dataset.searchText = `${r.title} ${r.ingredients.join(' ')}`.toLowerCase();
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', `View recipe: ${r.title}`);
+    card.setAttribute('aria-label', `View recipe: ${escapeHtml(r.title)}`);
     card.style.setProperty('--card-accent', catColor(r.category));
     card.style.animationDelay = `${0.24 + i * 0.07}s`;
 
     card.innerHTML = `
       <div class="card-top">
-        <span class="card-cat"><span class="cat-dot"></span>${r.category}</span>
+        <span class="card-cat"><span class="cat-dot"></span>${escapeHtml(r.category)}</span>
         <div class="card-actions">
-           <button type="button" class="card-cart${inCart ? ' in-cart' : ''}" data-recipe-id="${id}" aria-label="${inCart ? 'Remove from cart' : 'Add to cart'}">
+           <button type="button" class="card-cart${inCart ? ' in-cart' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${inCart ? 'Remove from cart' : 'Add to cart'}">
              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
            </button>
-           <button type="button" class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${id}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
+           <button type="button" class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
         </div>
       </div>
-      <h3 class="card-title">${r.title}</h3>
-      <p class="card-desc">${r.description}</p>
-      <p class="card-meta">Serves ${meta.servings} · ${meta.totalTime} · ${meta.difficulty}</p>
+      <h3 class="card-title">${escapeHtml(r.title)}</h3>
+      <p class="card-desc">${escapeHtml(r.description)}</p>
+      <p class="card-meta">Serves ${escapeHtml(meta.servings)} · ${escapeHtml(meta.totalTime)} · ${escapeHtml(meta.difficulty)}</p>
       <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
 
@@ -297,19 +302,19 @@ export function viewRecipe(recipeId) {
   const meta = getRecipeMeta(r);
 
   details.innerHTML = `
-    <img src="${r.image}" alt="${r.title}" class="detail-hero" loading="lazy" decoding="async">
+    <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="detail-hero" loading="lazy" decoding="async">
     <div class="detail-content">
       <div class="detail-cat-badge" style="color:${color}">
         <span class="cat-dot" style="background:${color}"></span>
-        ${r.category}
+        ${escapeHtml(r.category)}
       </div>
-      <h2 id="recipe-detail-title" class="detail-title">${r.title}</h2>
-      <p class="detail-desc">${r.description}</p>
+      <h2 id="recipe-detail-title" class="detail-title">${escapeHtml(r.title)}</h2>
+      <p class="detail-desc">${escapeHtml(r.description)}</p>
 
       <div class="detail-meta" aria-label="Recipe details">
-        <span class="meta-chip">Serves ${meta.servings}</span>
-        <span class="meta-chip">${meta.totalTime}</span>
-        <span class="meta-chip">${meta.difficulty}</span>
+        <span class="meta-chip">Serves ${escapeHtml(meta.servings)}</span>
+        <span class="meta-chip">${escapeHtml(meta.totalTime)}</span>
+        <span class="meta-chip">${escapeHtml(meta.difficulty)}</span>
       </div>
 
       <div class="detail-section">
@@ -317,7 +322,7 @@ export function viewRecipe(recipeId) {
             <h3>Ingredients</h3>
             <div class="servings-control">
                 <button type="button" class="serve-btn serve-minus" aria-label="Decrease servings">&minus;</button>
-                <span class="serve-count" aria-live="polite">${meta.servings} servings</span>
+                <span class="serve-count" aria-live="polite">${escapeHtml(meta.servings)} servings</span>
                 <button type="button" class="serve-btn serve-plus" aria-label="Increase servings">&plus;</button>
             </div>
         </div>
@@ -326,7 +331,7 @@ export function viewRecipe(recipeId) {
             <li>
               <label class="ing-label">
                 <input type="checkbox">
-                <span class="ing-text">${i}</span>
+                <span class="ing-text">${escapeHtml(i)}</span>
               </label>
             </li>
         `).join('')}
@@ -344,10 +349,10 @@ export function viewRecipe(recipeId) {
       </div>
 
       <div class="detail-toolbar">
-        <button type="button" class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${recipeId}">
+        <button type="button" class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${escapeHtml(recipeId)}">
           ${isFav ? 'Saved' : 'Save recipe'}
         </button>
-        <button type="button" class="btn-save${inCart ? ' saved' : ''}" id="cart-add-btn" data-recipe-id="${recipeId}">
+        <button type="button" class="btn-save${inCart ? ' saved' : ''}" id="cart-add-btn" data-recipe-id="${escapeHtml(recipeId)}">
           ${inCart ? 'In List' : 'Add to List'}
         </button>
         <button type="button" class="btn-cooking-mode btn-save" id="cooking-mode-btn">Cooking Mode</button>
@@ -426,7 +431,7 @@ function updateServings(multiplier, recipe) {
       <li>
         <label class="ing-label">
           <input type="checkbox">
-          <span class="ing-text">${text}</span>
+          <span class="ing-text">${escapeHtml(text)}</span>
         </label>
       </li>
     `;
@@ -463,18 +468,19 @@ export function renderFavoritesGrid() {
     item.className = 'fav-item';
     item.tabIndex = 0;
     item.setAttribute('role', 'button');
-    item.setAttribute('aria-label', `Open saved recipe: ${r.title}`);
+    item.setAttribute('aria-label', `Open saved recipe: ${escapeHtml(r.title)}`);
     item.innerHTML = `
       <span class="fav-cat" style="color:${catColor(r.category)}">
         <span class="cat-dot" style="background:${catColor(r.category)}"></span>
-        ${r.category}
+        ${escapeHtml(r.category)}
       </span>
-      <h4>${r.title}</h4>
+      <h4>${escapeHtml(r.title)}</h4>
     `;
     
     item.addEventListener('click', () => { 
       document.getElementById('fav-sheet').classList.add('hidden');
       syncBodyScrollLock();
+      restoreFocus(); // Fix for focus flow
       navigateToRecipe(id); 
     });
     
@@ -483,6 +489,7 @@ export function renderFavoritesGrid() {
         e.preventDefault();
         document.getElementById('fav-sheet').classList.add('hidden');
         syncBodyScrollLock();
+        restoreFocus(); // Fix for focus flow
         navigateToRecipe(id);
       }
     });
@@ -517,13 +524,13 @@ export function renderCartItems() {
 
     const group = document.createElement('div');
     group.className = 'cart-recipe-group';
-    group.innerHTML = `<h3 class="cart-recipe-title">${r.title}</h3>`;
+    group.innerHTML = `<h3 class="cart-recipe-title">${escapeHtml(r.title)}</h3>`;
     
     r.ingredients.forEach(ing => {
       group.innerHTML += `
         <label class="cart-ingredient">
           <input type="checkbox">
-          <span>${ing}</span>
+          <span>${escapeHtml(ing)}</span>
         </label>
       `;
     });
@@ -636,12 +643,10 @@ function updateTimers() {
   }
   
   const now = Date.now();
-  let changed = false;
   
   activeTimers.forEach(t => {
     if (now >= t.end && !t.done) {
       t.done = true;
-      changed = true;
       playDing();
     }
   });

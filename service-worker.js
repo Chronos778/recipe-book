@@ -1,15 +1,15 @@
-const CACHE_NAME = 'recipe-book-cache-v5';
+const CACHE_NAME = 'recipe-book-cache-v6';
 const urlsToCache = [
     './',
     './index.html',
-    './styles.css',
-    './main.js',
-    './store.js',
-    './api.js',
-    './utils.js',
-    './router.js',
-    './components.js',
-    './recipes.json',
+    './css/styles.css',
+    './js/main.js',
+    './js/store.js',
+    './js/api.js',
+    './js/utils.js',
+    './js/router.js',
+    './js/components.js',
+    './data/recipes.json',
     './manifest.json',
 ];
 
@@ -56,7 +56,9 @@ self.addEventListener('fetch', (event) => {
                 }
                 return networkResponse;
             }).catch(() => {
-                // Ignore fetch errors to prevent unhandled rejection spam when offline
+                // If fetch fails (offline), return cached response if available, or a 503 fallback
+                if (cachedResponse) return cachedResponse;
+                return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
             });
 
             // Return cached response immediately if available, while fetching in background

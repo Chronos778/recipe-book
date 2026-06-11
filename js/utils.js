@@ -170,14 +170,21 @@ export function triggerExplosion(x, y) {
   }
 }
 
+let audioCtx = null;
 export function playDing() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    osc.connect(ctx.destination);
-    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume context if suspended (common in browsers until user interaction)
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    osc.connect(audioCtx.destination);
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
     osc.start();
-    osc.stop(ctx.currentTime + 0.3);
+    osc.stop(audioCtx.currentTime + 0.3);
   } catch(e) {}
 }
 
