@@ -51,17 +51,18 @@ To run this project locally, follow these steps:
 
 ## Usage
 
-### HTML Structure
+### Architecture & Folder Structure
 
-The main HTML structure is defined in the `index.html` file.
-
-### CSS Styles
-
-The styles for the website are defined in the `styles.css` file.
-
-### JavaScript Functionality
-
-The main JavaScript functionality is defined in the `main.js` file.
+- **`index.html`**: The main entry point.
+- **`css/styles.css`**: The design system, typography, and layout styles.
+- **`js/`**: Contains the modularized application logic.
+  - `main.js`: Initialization and global event delegation.
+  - `store.js`: Reactive state management using JavaScript Proxies.
+  - `components.js`: UI rendering and DOM manipulation.
+  - `router.js`: History API deep linking for individual recipes.
+  - `api.js`: Handles asynchronous fetching of data.
+  - `utils.js`: Pure helper functions for formatting, math, and UI effects.
+- **`data/recipes.json`**: The database of recipes.
 
 ### Service Worker
 
@@ -87,44 +88,44 @@ Thank you for your contributions!
 
 To add a new recipe to the site, follow these steps:
 
-1. **Update `recipes.js`:**
+1. **Update `data/recipes.json`:**
 
-    - Open the `recipes.js` file.
-    - Add a new recipe object entry to the `recipes` object with the following properties:
+    - Open the `data/recipes.json` file.
+    - Add a new recipe object entry to the top-level JSON object. It requires the following properties:
     - `title`: The name of the recipe.
-    - `image`: The path to the recipe image.
+    - `image`: The URL or path to the recipe image.
     - `description`: A brief description of the recipe.
-    - `ingredients`: A list of ingredients required for the recipe.
+    - `ingredients`: An array of strings representing ingredients required for the recipe.
     - `instructions`: Step-by-step instructions on how to prepare the recipe.
-    - `nutrition`: Nutritional information for the recipe.
-    - `category`: The category of the recipe (e.g., breakfast, dessert).
+    - `macros`: Nutritional information object (`calories`, `protein`, `fat`, `carbs`).
+    - `category`: The category of the recipe (e.g., `"breakfast"`, `"dessert"`).
     - `servings`: Number of servings (for example, `2` or `4`).
     - `totalTime`: Total recipe time (for example, `"25 min"`).
     - `difficulty`: Difficulty label (`"Easy"`, `"Medium"`, or `"Hard"`).
 
 2. **Add Recipe Image:**
-   - Place the recipe image in the `images` folder.
-   - Ensure the image path in the `recipes.js` file matches the location of the image in the `images` folder.
+   - Place the recipe image in the `images` folder (if hosting locally) or provide a remote URL.
+   - Ensure the image path in `data/recipes.json` is correct.
 
-Example of adding a new recipe in `recipes.js`:
+Example of adding a new recipe in `data/recipes.json`:
 
-```javascript
-const recipes = {
-    recipe1: {
-        title: 'Blueberry Pancakes',
-        image: 'images/recipe.jpg',
-        description: 'Fluffy pancakes loaded with fresh blueberries.',
-        ingredients: [
-            '1 cup of ingredient A',
-            '2 tbsp of ingredient B',
-            '3 pieces of ingredient C'
+```json
+{
+    "new_recipe_id": {
+        "title": "Blueberry Pancakes",
+        "image": "images/recipe.jpg",
+        "description": "Fluffy pancakes loaded with fresh blueberries.",
+        "ingredients": [
+            "1 cup of ingredient A",
+            "2 tbsp of ingredient B",
+            "3 pieces of ingredient C"
         ],
-        instructions: 'Mix all ingredients together and cook for 20 minutes.',
-        nutrition: 'Calories: 200, Protein: 10g, Fat: 5g, Carbs: 30g',
-        category: 'breakfast',
-        servings: 2,
-        totalTime: '20 min',
-        difficulty: 'Easy'
-    },
-};
+        "instructions": "Mix all ingredients together and cook for 20 minutes.",
+        "macros": { "calories": 200, "protein": 10, "fat": 5, "carbs": 30 },
+        "category": "breakfast",
+        "servings": 2,
+        "totalTime": "20 min",
+        "difficulty": "Easy"
+    }
+}
 ```
