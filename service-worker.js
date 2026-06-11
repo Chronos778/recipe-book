@@ -1,12 +1,16 @@
-const CACHE_NAME = 'recipe-book-cache-v4';
+const CACHE_NAME = 'recipe-book-cache-v5';
 const urlsToCache = [
-    new URL('./', self.location).toString(),
-    new URL('./index.html', self.location).toString(),
-    new URL('./styles.css', self.location).toString(),
-    new URL('./main.js', self.location).toString(),
-    new URL('./recipes.js', self.location).toString(),
-    new URL('./manifest.json', self.location).toString(),
-    new URL('./service-worker.js', self.location).toString(),
+    './',
+    './index.html',
+    './styles.css',
+    './main.js',
+    './store.js',
+    './api.js',
+    './utils.js',
+    './router.js',
+    './components.js',
+    './recipes.json',
+    './manifest.json',
 ];
 
 self.addEventListener('install', (event) => {
@@ -20,7 +24,8 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
 
-    if (request.destination === 'image') {
+    // Cache-First for images (Unsplash)
+    if (request.destination === 'image' || request.url.includes('images.unsplash.com')) {
         event.respondWith(
             caches.match(request).then((cachedResponse) => {
                 if (cachedResponse) return cachedResponse;
@@ -39,21 +44,23 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
+    // Stale-While-Revalidate for everything else
     event.respondWith(
-        caches.match(request).then((response) => {
-            if (response) {
-                return response;
-            }
-            return fetch(request).then((response) => {
-                if (!response || response.status !== 200 || response.type !== 'basic') {
-                    return response;
+        caches.match(request).then((cachedResponse) => {
+            const fetchPromise = fetch(request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(request, responseToCache);
+                    });
                 }
-                const responseToCache = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    cache.put(request, responseToCache);
-                });
-                return response;
+                return networkResponse;
+            }).catch(() => {
+                // Ignore fetch errors to prevent unhandled rejection spam when offline
             });
+
+            // Return cached response immediately if available, while fetching in background
+            return cachedResponse || fetchPromise;
         })
     );
 });
