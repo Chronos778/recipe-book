@@ -1,7 +1,7 @@
 import { store } from './store.js';
 import { navigateToRecipe, navigateHome } from './router.js';
 import { 
-  getRecipeMeta, catColor, formatInstructions, renderMacros, 
+  getRecipeMeta, catColor, formatInstructions, 
   triggerExplosion, BOOKMARK_IN, BOOKMARK_OUT, parseIngredient, formatAmount,
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing,
   escapeHtml
@@ -13,20 +13,12 @@ let windowTimerInterval = null;
 
 // Subscribe to store changes to automatically update UI
 export function setupReactivity() {
-  store.subscribe('recipes', () => {
+  store.subscribe('feed', () => {
     renderRecipeCards();
-    updateCategoryCounts();
-    // Re-render persisting views now that recipes are loaded
-    renderFavoritesGrid();
-    renderCartItems();
-    renderRecentViews();
-    if (store.state.activeRecipeId) {
-       viewRecipe(store.state.activeRecipeId);
-    }
   });
-
-  store.subscribe('searchQuery', () => filterRecipes());
-  store.subscribe('activeCategory', () => filterRecipes());
+  
+  store.subscribe('categories', renderCategoryTabs);
+  store.subscribe('activeCategory', renderCategoryTabs);
 
   store.subscribe('favorites', () => {
     updateFavBadge();
@@ -65,8 +57,12 @@ export function setupReactivity() {
 
   store.subscribe('recentViews', () => renderRecentViews());
 
-  store.subscribe('activeRecipeId', (id) => {
+  store.subscribe('activeRecipeId', async (id) => {
     if (id) {
+      if (!store.state.recipes[id]) {
+        const api = await import('./api.js');
+        await api.fetchRecipeById(id);
+      }
       viewRecipe(id);
     } else {
       closeOverlay();
@@ -113,32 +109,54 @@ function updateCartBadge() {
 // RECIPE CARDS & LISTINGS
 // -----------------------------------------------------------------------------
 function renderRecipeCards() {
-  const container = document.getElementById('recipes');
-  if (!container) return;
-  container.innerHTML = '';
+  const grid = document.getElementById('recipes');
+  if (!grid) return;
+  grid.innerHTML = '';
 
-  const recipes = store.state.recipes;
-  const ids = Object.keys(recipes);
+  const feed = store.state.feed;
+  const count = feed.length;
 
-  ids.forEach((id, i) => {
-    const r = recipes[id];
-    const meta = getRecipeMeta(r);
+  const countEl = document.getElementById('recipe-count');
+  if (countEl) countEl.textContent = `${count} recipe${count !== 1 ? 's' : ''}`;
+
+  const noRes = document.getElementById('no-results');
+  if(noRes) noRes.classList.toggle('hidden', count > 0);
+
+  const titleEl = document.getElementById('recipes-title');
+  const category = store.state.activeCategory;
+  if (titleEl) {
+    titleEl.textContent = category === 'all'
+      ? 'All recipes'
+      : category.charAt(0).toUpperCase() + category.slice(1) + ' recipes';
+  }
+
+  feed.forEach((item, i) => {
+    const id = item.id;
+    const r = store.state.recipes[id]; // Might be undefined if not loaded
+    
+    let meta = { servings: 2, totalTime: '30 min', difficulty: 'Medium' };
+    let desc = '';
+    if (r) {
+      meta = getRecipeMeta(r);
+      desc = r.description;
+    }
+
     const isFav = store.state.favorites.includes(id);
     const inCart = store.state.cart.includes(id);
+    const catName = escapeHtml(item.category || 'Other');
     
     const card = document.createElement('div');
     card.className = 'recipe-card';
-    card.dataset.category = escapeHtml(r.category);
-    card.dataset.searchText = `${r.title} ${r.ingredients.join(' ')}`.toLowerCase();
+    card.dataset.category = catName;
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', `View recipe: ${escapeHtml(r.title)}`);
-    card.style.setProperty('--card-accent', catColor(r.category));
-    card.style.animationDelay = `${0.24 + i * 0.07}s`;
+    card.setAttribute('aria-label', `View recipe: ${escapeHtml(item.title)}`);
+    card.style.setProperty('--card-accent', catColor(catName));
+    card.style.animationDelay = `${0.24 + i * 0.05}s`;
 
     card.innerHTML = `
       <div class="card-top">
-        <span class="card-cat"><span class="cat-dot"></span>${escapeHtml(r.category)}</span>
+        <span class="card-cat"><span class="cat-dot"></span>${catName}</span>
         <div class="card-actions">
            <button type="button" class="card-cart${inCart ? ' in-cart' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${inCart ? 'Remove from cart' : 'Add to cart'}">
              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
@@ -146,14 +164,26 @@ function renderRecipeCards() {
            <button type="button" class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
         </div>
       </div>
-      <h3 class="card-title">${escapeHtml(r.title)}</h3>
-      <p class="card-desc">${escapeHtml(r.description)}</p>
-      <p class="card-meta">Serves ${escapeHtml(meta.servings)} · ${escapeHtml(meta.totalTime)} · ${escapeHtml(meta.difficulty)}</p>
+      <div class="card-img-wrap" style="height: 140px; overflow: hidden; border-radius: 8px; margin-bottom: 12px; background: #222;">
+         <img src="${item.image}/preview" alt="${escapeHtml(item.title)}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
+      </div>
+      <h3 class="card-title">${escapeHtml(item.title)}</h3>
+      ${desc ? `<p class="card-desc">${escapeHtml(desc)}</p>` : ''}
+      ${r ? `<p class="card-meta">Serves ${escapeHtml(meta.servings)} · ${escapeHtml(meta.totalTime)} · ${escapeHtml(meta.difficulty)}</p>` : ''}
       <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
 
-    card.addEventListener('click', (e) => {
+    card.addEventListener('click', async (e) => {
       if (e.target.closest('.card-save') || e.target.closest('.card-cart')) return;
+      
+      if (!store.state.recipes[id]) {
+        card.style.opacity = '0.6';
+        card.style.pointerEvents = 'none';
+        const api = await import('./api.js');
+        await api.fetchRecipeById(id);
+        card.style.opacity = '1';
+        card.style.pointerEvents = 'auto';
+      }
       navigateToRecipe(id);
     });
 
@@ -161,7 +191,7 @@ function renderRecipeCards() {
       if (e.target.closest('.card-save') || e.target.closest('.card-cart')) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        navigateToRecipe(id);
+        card.click();
       }
     });
 
@@ -183,10 +213,8 @@ function renderRecipeCards() {
       }
     });
 
-    container.appendChild(card);
+    grid.appendChild(card);
   });
-
-  filterRecipes();
 }
 
 function refreshCardSaves() {
@@ -200,55 +228,21 @@ function refreshCardSaves() {
   });
 }
 
-function filterRecipes() {
-  const search = store.state.searchQuery;
-  const category = store.state.activeCategory;
-  let visible = 0;
-
-  document.querySelectorAll('.recipe-card').forEach(card => {
-    const searchText = card.dataset.searchText || '';
-    const cat = card.dataset.category;
-    const show = (searchText.includes(search) || !search) && (cat === category || category === 'all');
-
-    if (show) {
-      card.style.display = '';
-      card.style.animation = 'none';
-      void card.offsetWidth;
-      card.style.animation = `enter 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) backwards`;
-      card.style.animationDelay = `${visible * 0.05}s`;
-      visible++;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  const countEl = document.getElementById('recipe-count');
-  if (countEl) countEl.textContent = `${visible} recipe${visible !== 1 ? 's' : ''}`;
-
-  const noRes = document.getElementById('no-results');
-  if(noRes) noRes.classList.toggle('hidden', visible > 0);
-
-  const titleEl = document.getElementById('recipes-title');
-  if (titleEl) {
-    titleEl.textContent = category === 'all'
-      ? 'All recipes'
-      : category.charAt(0).toUpperCase() + category.slice(1) + ' recipes';
-  }
-}
-
-function updateCategoryCounts() {
-  const counts = { all: 0 };
-  Object.values(store.state.recipes).forEach((recipe) => {
-    counts.all += 1;
-    counts[recipe.category] = (counts[recipe.category] || 0) + 1;
-  });
-
-  document.querySelectorAll('#cat-bar .cat').forEach((tab) => {
-    const category = tab.dataset.category;
-    const baseLabel = tab.dataset.baseLabel || tab.textContent.trim().replace(/\s*\(\d+\)$/, '');
-    tab.dataset.baseLabel = baseLabel;
-    const count = counts[category] || 0;
-    tab.textContent = `${baseLabel} (${count})`;
+function renderCategoryTabs() {
+  const catBar = document.getElementById('cat-bar');
+  if (!catBar) return;
+  const activeCat = store.state.activeCategory;
+  
+  catBar.innerHTML = `<button class="cat ${activeCat === 'all' ? 'active' : ''}" data-category="all" aria-current="${activeCat === 'all' ? 'true' : 'false'}">Discover</button>`;
+  
+  store.state.categories.forEach(cat => {
+    const btn = document.createElement('button');
+    const isActive = activeCat === cat;
+    btn.className = `cat ${isActive ? 'active' : ''}`;
+    btn.dataset.category = cat;
+    btn.setAttribute('aria-current', isActive ? 'true' : 'false');
+    btn.textContent = cat;
+    catBar.appendChild(btn);
   });
 }
 
@@ -343,11 +337,6 @@ export function viewRecipe(recipeId) {
         <p class="detail-instructions">${formatInstructions(r.instructions)}</p>
       </div>
 
-      <div class="detail-section">
-        <h3>Nutrition</h3>
-        <div id="macro-container" class="detail-nutrition">${renderMacros(r.macros, 1)}</div>
-      </div>
-
       <div class="detail-toolbar">
         <button type="button" class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${escapeHtml(recipeId)}">
           ${isFav ? 'Saved' : 'Save recipe'}
@@ -437,10 +426,6 @@ function updateServings(multiplier, recipe) {
     `;
   }).join('');
 
-  const macroContainer = document.getElementById('macro-container');
-  if (macroContainer && recipe.macros) {
-    macroContainer.innerHTML = renderMacros(recipe.macros, multiplier);
-  }
 }
 
 // -----------------------------------------------------------------------------

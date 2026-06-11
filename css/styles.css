@@ -438,20 +438,12 @@ body.dark .theme-dark-label {
 #cat-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
   padding: 0 var(--page-px) 36px;
   max-width: calc(var(--max-w) + var(--page-px) * 2);
   margin: 0 auto;
   animation: enter var(--dur-lg) var(--ease) 0.16s both;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  /* Firefox */
-}
-
-#cat-bar::-webkit-scrollbar {
-  display: none;
-  /* Chrome/Safari */
 }
 
 .cat-row {

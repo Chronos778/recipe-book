@@ -1,5 +1,5 @@
 import { store } from './store.js';
-import { fetchRecipes } from './api.js';
+import { fetchCategories, fetchRandomFeed, fetchSearch, fetchByCategory } from './api.js';
 import { setupRouter, navigateHome } from './router.js';
 import { 
   setupReactivity, renderFavoritesGrid, renderCartItems,
@@ -23,7 +23,8 @@ async function initializeApp() {
   setupReactivity();
   setupRouter(); // checks URL and sets activeRecipeId
   
-  await fetchRecipes(); // Will trigger reactive render of cards and active recipe
+  await fetchCategories();
+  await fetchRandomFeed();
 
   initDarkMode();
   setupSearch();
@@ -75,26 +76,52 @@ function setupSearch() {
   searchBar.addEventListener('input', (e) => {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
-      store.setSearchQuery(e.target.value);
-    }, 200);
+      const query = e.target.value.trim();
+      store.setSearchQuery(query);
+      
+      const grid = document.getElementById('recipes');
+      if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Searching database...</div>';
+      
+      if (query === '') {
+        fetchRandomFeed();
+      } else {
+        fetchSearch(query);
+      }
+    }, 300);
   });
 }
 
 function setupCategoryTabs() {
-  const tabs = document.querySelectorAll('#cat-bar .cat');
+  const catBar = document.getElementById('cat-bar');
   const hiddenSelect = document.getElementById('category-filter');
+  
+  if (!catBar) return;
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      tabs.forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      tabs.forEach(t => t.setAttribute('aria-current', 'false'));
-      tab.setAttribute('aria-current', 'true');
-      
-      const cat = tab.dataset.category;
-      hiddenSelect.value = cat;
-      store.setActiveCategory(cat);
+  catBar.addEventListener('click', (e) => {
+    const tab = e.target.closest('.cat');
+    if (!tab) return;
+
+    const tabs = catBar.querySelectorAll('.cat');
+    tabs.forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-current', 'false');
     });
+    
+    tab.classList.add('active');
+    tab.setAttribute('aria-current', 'true');
+    
+    const cat = tab.dataset.category;
+    if (hiddenSelect) hiddenSelect.value = cat;
+    store.setActiveCategory(cat);
+    
+    const grid = document.getElementById('recipes');
+    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Loading category...</div>';
+    
+    if (cat === 'all') {
+      fetchRandomFeed();
+    } else {
+      fetchByCategory(cat);
+    }
   });
 }
 

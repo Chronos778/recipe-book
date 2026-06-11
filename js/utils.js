@@ -1,8 +1,20 @@
 const CAT_COLORS = {
+  beef: '#913b3b',
   breakfast: 'var(--cat-breakfast)',
+  chicken: '#d97d3a',
+  dessert: 'var(--cat-dessert)',
+  goat: '#8b5a45',
+  lamb: '#7a3e48',
+  miscellaneous: '#7b8772',
+  pasta: '#d4a353',
+  pork: '#ba6d66',
+  seafood: '#52828d',
+  side: '#8c9c61',
+  starter: '#cf7357',
+  vegan: '#467a54',
+  vegetarian: '#629e71',
   lunch: 'var(--cat-lunch)',
   dinner: 'var(--cat-dinner)',
-  dessert: 'var(--cat-dessert)',
 };
 
 const DEFAULT_TIME_BY_CATEGORY = {
@@ -15,7 +27,10 @@ const DEFAULT_TIME_BY_CATEGORY = {
 export const BOOKMARK_OUT = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 export const BOOKMARK_IN = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>`;
 
-export function catColor(cat) { return CAT_COLORS[cat] || 'var(--ink-3)'; }
+export function catColor(cat) { 
+  if (!cat) return 'var(--ink-3)';
+  return CAT_COLORS[cat.toLowerCase()] || 'var(--ink-3)'; 
+}
 
 export function inferDifficulty(recipe) {
   const count = Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0;
@@ -101,52 +116,7 @@ export function formatAmount(num) {
   return Number(num.toFixed(2));
 }
 
-export function renderMacros(macros, multiplier) {
-  if (!macros) return '<p class="empty">Macro data unavailable.</p>';
-  const cal = Math.round(macros.calories * multiplier);
-  const pro = Math.round(macros.protein * multiplier);
-  const fat = Math.round(macros.fat * multiplier);
-  const car = Math.round(macros.carbs * multiplier);
 
-  const calPro = pro * 4;
-  const calFat = fat * 9;
-  const calCar = car * 4;
-  const total = (calPro + calFat + calCar) || 1;
-
-  const pctPro = (calPro / total) * 100;
-  const pctFat = (calFat / total) * 100;
-
-  const grad = `conic-gradient(var(--cat-lunch) 0% ${pctPro}%, var(--cat-breakfast) ${pctPro}% ${pctPro + pctFat}%, var(--cat-dinner) ${pctPro + pctFat}% 100%)`;
-
-  return `
-    <div class="macro-display">
-      <div class="macro-chart">
-        <div class="macro-donut" style="background: ${grad}"></div>
-        <div class="macro-center">
-          <span class="macro-cals">${cal}</span>
-          <span class="macro-cals-lbl">kcal</span>
-        </div>
-      </div>
-      <div class="macro-legend">
-        <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-lunch)"></span>
-          <span class="macro-lbl">Protein</span>
-          <strong class="macro-val">${pro}g</strong>
-        </div>
-        <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-breakfast)"></span>
-          <span class="macro-lbl">Fat</span>
-          <strong class="macro-val">${fat}g</strong>
-        </div>
-        <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-dinner)"></span>
-          <span class="macro-lbl">Carbs</span>
-          <strong class="macro-val">${car}g</strong>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 export function triggerExplosion(x, y) {
   const particles = 12;
