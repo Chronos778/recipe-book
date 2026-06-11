@@ -28,7 +28,9 @@ class Store {
       recentViews: safeReadJSON('recentViews', []),
       activeRecipeId: null,
       searchQuery: '',
-      activeCategory: 'all'
+      activeCategory: 'all',
+      categories: [],
+      feed: []
     };
 
     // Proxy to intercept state changes
@@ -115,6 +117,13 @@ class Store {
 
   setActiveCategory(category) {
     this.state.activeCategory = category;
+  }
+
+  setCategories(cats) {
+    this.state.categories = cats;
+  }
+  setFeed(feedItems) {
+    this.state.feed = feedItems;
   }
 }
 
