@@ -17,16 +17,9 @@ function processFullMeals(meals) {
         }
       }
 
-      let description = '';
-      if (meal.strInstructions) {
-         const firstPeriod = meal.strInstructions.indexOf('.');
-         description = firstPeriod !== -1 ? meal.strInstructions.slice(0, firstPeriod + 1) : 'A delicious meal.';
-      }
-
       newRecipes[meal.idMeal] = {
         title: meal.strMeal || 'Unknown Recipe',
         image: meal.strMealThumb || '',
-        description: description,
         instructions: meal.strInstructions || '',
         category: meal.strCategory || 'Other',
         ingredients: ingredients

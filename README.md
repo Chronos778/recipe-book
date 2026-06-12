@@ -5,15 +5,17 @@ Welcome to Foodbook! A beautifully designed, highly interactive web application 
 ## Features
 
 - **TheMealDB API Integration**: Access over 600+ recipes spanning 14 categories directly from the cloud.
-- **Lazy-Loaded Architecture**: Lightweight category browsing ensures high performance and low bandwidth usage. Recipe details (ingredients, instructions) are instantly fetched and cached only when you click them.
+- **Intelligent Ingredient Analyzer**: Since TheMealDB does not provide nutritional data, Foodbook includes a custom, zero-dependency algorithm that instantly parses raw ingredient strings (including complex fractions) to calculate highly accurate procedural Macro profiles (Calories, Protein, Fat, Carbs) directly in the browser!
+- **Instruction Normalizer**: Automatically restructures and cleans TheMealDB's chaotic, unformatted instruction strings into beautiful, consistent, and easy-to-read step-by-step ordered lists.
+- **Lazy-Loaded Architecture**: Lightweight category browsing ensures high performance and low bandwidth usage. Recipe details are instantly fetched and cached only when you click them.
 - **Dynamic Categories**: Master categories are fetched directly from the database (Beef, Breakfast, Seafood, Pasta, etc.) to ensure the navigation bar is always up to date.
 - **Recipe Search**: Fast search queries that look up the global database.
 - **Responsive Kinfolk Design**: A clean, modern aesthetic with highly curated color palettes for each category, dynamic micro-animations, and CSS grid layouts.
 - **Dark Mode**: Toggle between light and dark modes with persistent local storage.
-- **Step-by-Step Cooking Mode**: A distraction-free, full-screen overlay for following recipe instructions.
+- **Step-by-Step Cooking Mode**: A distraction-free, full-screen overlay for following normalized recipe instructions.
 - **Built-in Timers**: Clickable time phrases in recipes that start an in-app countdown timer.
-- **Portion Scaler**: Dynamically adjust ingredient quantities by changing the serving size multiplier.
-- **Shopping Cart**: Save recipes or add them to your grocery list.
+- **Portion Scaler**: Dynamically adjust ingredient quantities by changing the serving size multiplier. The Macro Graph intelligently re-scales to accurately reflect "per serving" nutrition!
+- **Shopping Cart & Favorites**: Save recipes or add them to your grocery list.
 - **Progressive Web App (PWA)**: Includes a service worker, caching, and a manifest for offline capability and installation as a native app.
 
 ## Installation
