@@ -4,7 +4,8 @@ import {
   getRecipeMeta, catColor, formatInstructions, 
   triggerExplosion, BOOKMARK_IN, BOOKMARK_OUT, parseIngredient, formatAmount,
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing,
-  escapeHtml
+  escapeHtml, generateMacrosFromIngredients, renderMacros, parseInstructionSteps,
+  formatSingleInstruction
 } from './utils.js';
 
 let activeMultiplier = 1;
@@ -168,7 +169,6 @@ function renderRecipeCards() {
          <img src="${item.image}/preview" alt="${escapeHtml(item.title)}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
       </div>
       <h3 class="card-title">${escapeHtml(item.title)}</h3>
-      ${desc ? `<p class="card-desc">${escapeHtml(desc)}</p>` : ''}
       ${r ? `<p class="card-meta">Serves ${escapeHtml(meta.servings)} · ${escapeHtml(meta.totalTime)} · ${escapeHtml(meta.difficulty)}</p>` : ''}
       <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
@@ -303,7 +303,6 @@ export function viewRecipe(recipeId) {
         ${escapeHtml(r.category)}
       </div>
       <h2 id="recipe-detail-title" class="detail-title">${escapeHtml(r.title)}</h2>
-      <p class="detail-desc">${escapeHtml(r.description)}</p>
 
       <div class="detail-meta" aria-label="Recipe details">
         <span class="meta-chip">Serves ${escapeHtml(meta.servings)}</span>
@@ -334,7 +333,14 @@ export function viewRecipe(recipeId) {
 
       <div class="detail-section">
         <h3>Method</h3>
-        <p class="detail-instructions">${formatInstructions(r.instructions)}</p>
+        ${formatInstructions(r.instructions)}
+      </div>
+
+      <div class="detail-section">
+        <h3>Nutrition per Serving</h3>
+        <div id="macro-container">
+          ${renderMacros(generateMacrosFromIngredients(r.ingredients), 1 / meta.servings)}
+        </div>
       </div>
 
       <div class="detail-toolbar">
@@ -550,7 +556,8 @@ function releaseWakeLock() {
 }
 
 export function openCookingMode(recipe) {
-  cookingSteps = recipe.instructions.split('\n').filter(s => s.trim() !== '');
+  cookingSteps = parseInstructionSteps(recipe.instructions);
+  if (cookingSteps.length === 0) cookingSteps = ["No instructions available."];
   currentCookingStep = 0;
   
   document.getElementById('cooking-mode-title').textContent = recipe.title;
@@ -577,8 +584,8 @@ export function updateCookingModeUI() {
   const prevBtn = document.getElementById('cooking-prev');
   const nextBtn = document.getElementById('cooking-next');
   
-  let stepText = cookingSteps[currentCookingStep].replace(/^\d+\.\s*/, '');
-  textEl.innerHTML = formatInstructions(stepText);
+  let stepText = cookingSteps[currentCookingStep].replace(/^\d+[\.\)]\s*/, '');
+  textEl.innerHTML = formatSingleInstruction(stepText);
   progEl.textContent = `Step ${currentCookingStep + 1} of ${cookingSteps.length}`;
   
   prevBtn.disabled = currentCookingStep === 0;

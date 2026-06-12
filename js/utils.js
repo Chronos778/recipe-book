@@ -39,8 +39,19 @@ export function inferDifficulty(recipe) {
   return 'Hard';
 }
 
+export function inferServings(recipe) {
+  if (Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
+    const macros = generateMacrosFromIngredients(recipe.ingredients);
+    let s = Math.round(macros.calories / 450); // average meal/dessert portion
+    if (s < 1) s = 1;
+    if (s > 24) s = 24;
+    return s;
+  }
+  return 2;
+}
+
 export function getRecipeMeta(recipe) {
-  const servings = Number.isFinite(recipe.servings) ? recipe.servings : 2;
+  const servings = Number.isFinite(recipe.servings) ? recipe.servings : inferServings(recipe);
   const difficulty = recipe.difficulty || inferDifficulty(recipe);
   const totalTime = recipe.totalTime || DEFAULT_TIME_BY_CATEGORY[recipe.category] || '30 min';
   return { servings, difficulty, totalTime };
@@ -59,24 +70,54 @@ export function escapeHtml(text) {
   });
 }
 
-export function formatInstructions(text) {
-  if (text == null) return '';
+export function parseInstructionSteps(text) {
+  if (!text) return [];
+  let cleanText = text.replace(/\r\n/g, '\n').replace(/[ \t]+/g, ' ').trim();
+
+  let steps = [];
+
+  if (/step\s*\d+/i.test(cleanText)) {
+      steps = cleanText.split(/step\s*\d+[-:]?\s*/i);
+  } 
+  else if (/(?:^|\n|\s)\d+[\.)]\s/m.test(cleanText)) {
+      steps = cleanText.split(/(?:^|\n|\s)\d+[\.)]\s/);
+  }
+  else if (cleanText.includes('\n')) {
+      steps = cleanText.split(/\n+/);
+  }
+  else {
+      steps = cleanText.replace(/\.\s+(?=[A-Z])/g, '.|SPLIT|').split('|SPLIT|');
+  }
+
+  return steps
+      .map(s => s.trim().replace(/^[-:]\s*/, ''))
+      .filter(s => s.length > 3);
+}
+
+export function formatSingleInstruction(step) {
   const timeRegex = /(\d+)\s*(min|minute|hr|hour)s?/gi;
   let result = '';
   let lastIndex = 0;
   let match;
-  while ((match = timeRegex.exec(text)) !== null) {
-    const fullMatch = match[0];
-    const num = match[1];
-    const unit = match[2];
-    const before = text.slice(lastIndex, match.index);
-    result += escapeHtml(before);
-    const safeLabel = escapeHtml(fullMatch);
-    result += `<button type="button" class="timer-btn" data-time="${String(num)}" data-unit="${String(unit)}">${safeLabel}</button>`;
-    lastIndex = match.index + fullMatch.length;
+  while ((match = timeRegex.exec(step)) !== null) {
+      const fullMatch = match[0];
+      const num = match[1];
+      const unit = match[2];
+      const before = step.slice(lastIndex, match.index);
+      result += escapeHtml(before);
+      const safeLabel = escapeHtml(fullMatch);
+      result += `<button type="button" class="timer-btn" data-time="${String(num)}" data-unit="${String(unit)}">${safeLabel}</button>`;
+      lastIndex = match.index + fullMatch.length;
   }
-  result += escapeHtml(text.slice(lastIndex));
-  return result.replace(/\n/g, '<br>');
+  result += escapeHtml(step.slice(lastIndex));
+  return result;
+}
+
+export function formatInstructions(text) {
+  const steps = parseInstructionSteps(text);
+  if (steps.length === 0) return '';
+  const formattedSteps = steps.map(step => `<li>${formatSingleInstruction(step)}</li>`);
+  return `<ol class="detail-instructions-list">${formattedSteps.join('')}</ol>`;
 }
 
 export function parseIngredient(text) {
@@ -117,6 +158,173 @@ export function formatAmount(num) {
 }
 
 
+
+export function generateMacrosFromIngredients(ingredients) {
+  let protein = 0;
+  let fat = 0;
+  let carbs = 0;
+
+  const db = {
+    chicken: { p: 31, f: 3, c: 0 }, beef: { p: 26, f: 15, c: 0 }, steak: { p: 25, f: 19, c: 0 },
+    pork: { p: 27, f: 14, c: 0 }, bacon: { p: 37, f: 42, c: 1 }, sausage: { p: 14, f: 28, c: 2 },
+    ham: { p: 21, f: 6, c: 1 }, lamb: { p: 25, f: 21, c: 0 }, duck: { p: 19, f: 28, c: 0 },
+    salmon: { p: 20, f: 13, c: 0 }, tuna: { p: 28, f: 1, c: 0 }, shrimp: { p: 24, f: 0, c: 0 },
+    prawn: { p: 24, f: 0, c: 0 }, fish: { p: 20, f: 5, c: 0 },
+    egg: { p: 13, f: 11, c: 1, unit: 'count', weight: 50 },
+
+    cheese: { p: 25, f: 33, c: 1 }, cheddar: { p: 25, f: 33, c: 1 }, parmesan: { p: 38, f: 29, c: 4 },
+    mozzarella: { p: 22, f: 22, c: 2 }, milk: { p: 3, f: 2, c: 5 }, cream: { p: 2, f: 37, c: 3 },
+    butter: { p: 1, f: 81, c: 1 }, yogurt: { p: 10, f: 0, c: 4 },
+
+    flour: { p: 10, f: 1, c: 76 }, rice: { p: 3, f: 0, c: 28 }, pasta: { p: 14, f: 2, c: 75 },
+    spaghetti: { p: 14, f: 2, c: 75 }, noodle: { p: 14, f: 2, c: 75 }, bread: { p: 9, f: 3, c: 49 },
+    bun: { p: 9, f: 3, c: 49 }, potato: { p: 2, f: 0, c: 17 }, fries: { p: 3, f: 15, c: 41 },
+    oat: { p: 17, f: 7, c: 66 }, corn: { p: 3, f: 1, c: 19 }, sugar: { p: 0, f: 0, c: 100 },
+    honey: { p: 0, f: 0, c: 82 }, syrup: { p: 0, f: 0, c: 70 }, jam: { p: 0, f: 0, c: 69 },
+
+    oil: { p: 0, f: 100, c: 0 }, mayonnaise: { p: 1, f: 75, c: 1 }, margarine: { p: 0, f: 80, c: 0 },
+
+    peanut: { p: 26, f: 49, c: 16 }, almond: { p: 21, f: 50, c: 22 }, walnut: { p: 15, f: 65, c: 14 },
+    cashew: { p: 18, f: 44, c: 30 },
+
+    tomato: { p: 1, f: 0, c: 4 }, onion: { p: 1, f: 0, c: 9 }, garlic: { p: 6, f: 0, c: 33 },
+    apple: { p: 0, f: 0, c: 14 }, banana: { p: 1, f: 0, c: 23 }, carrot: { p: 1, f: 0, c: 10 },
+    bean: { p: 9, f: 0, c: 20 }, lentil: { p: 9, f: 0, c: 20 },
+
+    chocolate: { p: 5, f: 30, c: 60 }, cocoa: { p: 20, f: 14, c: 58 }, soy: { p: 10, f: 5, c: 9 }
+  };
+
+  ingredients.forEach(ing => {
+    let amountVal = 1;
+    let text = ing.toLowerCase();
+    
+    // Leverage the robust parser to handle fractions like "1 1/2" properly
+    const parsed = parseIngredient(ing);
+    let hasNumber = false;
+
+    if (parsed) {
+      amountVal = parsed.amount;
+      text = parsed.rest.toLowerCase();
+      hasNumber = true;
+    } else {
+      const fallback = text.match(/^(\d+(?:\.\d+)?)/);
+      if (fallback) {
+        amountVal = parseFloat(fallback[1]);
+        text = text.replace(fallback[0], '').trim();
+        hasNumber = true;
+      }
+    }
+
+    let amountGrams = 100;
+    
+    // Check for units
+    const weightMatch = text.match(/^(g|kg|oz|lb|pound)s?\b/);
+    const volMatch = text.match(/^(ml|l|cup|tbsp|tsp|tablespoon|teaspoon)s?\b/);
+
+    if (weightMatch) {
+      let unit = weightMatch[1];
+      let val = amountVal;
+      if (unit === 'kg') val *= 1000;
+      if (unit === 'oz') val *= 28.35;
+      if (unit === 'lb' || unit === 'pound') val *= 453.59;
+      amountGrams = val;
+    } else if (volMatch) {
+      let unit = volMatch[1];
+      let val = amountVal;
+      if (unit === 'cup') val *= 240;
+      if (unit === 'tbsp' || unit === 'tablespoon') val *= 15;
+      if (unit === 'tsp' || unit === 'teaspoon') val *= 5;
+      if (unit === 'l') val *= 1000;
+      amountGrams = val;
+    } else {
+      // If there's a number but no unit, assume it's a count (e.g. "2 apples" -> 200g).
+      // If there's no number at all (e.g. "a pinch of salt"), assume a tiny 10g trace amount.
+      amountGrams = hasNumber ? amountVal * 100 : 10;
+    }
+
+    if (amountGrams > 2000) amountGrams = 2000;
+
+    let matched = false;
+    for (const [key, macros] of Object.entries(db)) {
+      if (text.includes(key)) {
+        // Adjust for specific count-based units (like eggs)
+        if (macros.unit === 'count' && !weightMatch && !volMatch && hasNumber) {
+          amountGrams = amountVal * macros.weight;
+        }
+        const multiplier = amountGrams / 100;
+        protein += macros.p * multiplier;
+        fat += macros.f * multiplier;
+        carbs += macros.c * multiplier;
+        matched = true;
+        break;
+      }
+    }
+
+    if (!matched) {
+      protein += 0.5 * (amountGrams / 100);
+      carbs += 2 * (amountGrams / 100);
+    }
+  });
+
+  protein = Math.max(protein, 1);
+  fat = Math.max(fat, 1);
+  carbs = Math.max(carbs, 1);
+  const calories = (protein * 4) + (carbs * 4) + (fat * 9);
+
+  return {
+    calories: Math.round(calories),
+    protein: Math.round(protein),
+    fat: Math.round(fat),
+    carbs: Math.round(carbs)
+  };
+}
+
+export function renderMacros(macros, multiplier) {
+  if (!macros) return '<p class="empty">Macro data unavailable.</p>';
+  const cal = Math.round(macros.calories * multiplier);
+  const pro = Math.round(macros.protein * multiplier);
+  const fat = Math.round(macros.fat * multiplier);
+  const car = Math.round(macros.carbs * multiplier);
+
+  const calPro = pro * 4;
+  const calFat = fat * 9;
+  const calCar = car * 4;
+  const total = (calPro + calFat + calCar) || 1;
+
+  const pctPro = (calPro / total) * 100;
+  const pctFat = (calFat / total) * 100;
+
+  const grad = `conic-gradient(var(--cat-lunch) 0% ${pctPro}%, var(--cat-breakfast) ${pctPro}% ${pctPro + pctFat}%, var(--cat-dinner) ${pctPro + pctFat}% 100%)`;
+
+  return `
+    <div class="macro-display">
+      <div class="macro-chart">
+        <div class="macro-donut" style="background: ${grad}"></div>
+        <div class="macro-center">
+          <span class="macro-cals">${cal}</span>
+          <span class="macro-cals-lbl">kcal</span>
+        </div>
+      </div>
+      <div class="macro-legend">
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-lunch)"></span>
+          <span class="macro-lbl">Protein</span>
+          <strong class="macro-val">${pro}g</strong>
+        </div>
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-breakfast)"></span>
+          <span class="macro-lbl">Fat</span>
+          <strong class="macro-val">${fat}g</strong>
+        </div>
+        <div class="macro-item">
+          <span class="macro-dot" style="background: var(--cat-dinner)"></span>
+          <span class="macro-lbl">Carbs</span>
+          <strong class="macro-val">${car}g</strong>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
 export function triggerExplosion(x, y) {
   const particles = 12;

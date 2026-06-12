@@ -1,4 +1,4 @@
-const CACHE_NAME = 'recipe-book-cache-v14';
+const CACHE_NAME = 'recipe-book-cache-v24';
 const urlsToCache = [
     './',
     './index.html',
