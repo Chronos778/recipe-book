@@ -4,7 +4,8 @@ import {
   getRecipeMeta, catColor, formatInstructions, 
   triggerExplosion, BOOKMARK_IN, BOOKMARK_OUT, parseIngredient, formatAmount,
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing,
-  escapeHtml, generateMacrosFromIngredients, renderMacros, parseInstructionSteps
+  escapeHtml, generateMacrosFromIngredients, renderMacros, parseInstructionSteps,
+  formatSingleInstruction
 } from './utils.js';
 
 let activeMultiplier = 1;
@@ -431,10 +432,6 @@ function updateServings(multiplier, recipe) {
     `;
   }).join('');
 
-  const macroContainer = document.getElementById('macro-container');
-  if (macroContainer) {
-    macroContainer.innerHTML = renderMacros(generateMacrosFromIngredients(recipe.ingredients), 1 / getRecipeMeta(recipe).servings);
-  }
 }
 
 // -----------------------------------------------------------------------------
@@ -588,7 +585,7 @@ export function updateCookingModeUI() {
   const nextBtn = document.getElementById('cooking-next');
   
   let stepText = cookingSteps[currentCookingStep].replace(/^\d+[\.\)]\s*/, '');
-  textEl.innerHTML = formatInstructions(stepText);
+  textEl.innerHTML = formatSingleInstruction(stepText);
   progEl.textContent = `Step ${currentCookingStep + 1} of ${cookingSteps.length}`;
   
   prevBtn.disabled = currentCookingStep === 0;

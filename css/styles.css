@@ -959,8 +959,11 @@ body.dark .theme-dark-label {
   align-items: center;
   padding: 40px;
   text-align: center;
+  width: 100%;
   max-width: 800px;
   margin: 0 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .cooking-recipe-title {
@@ -1196,6 +1199,7 @@ body.dark .theme-dark-label {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  counter-reset: step;
 }
 
 .detail-instructions-list li {

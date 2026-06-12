@@ -86,7 +86,7 @@ export function parseInstructionSteps(text) {
       steps = cleanText.split(/\n+/);
   }
   else {
-      steps = cleanText.split(/(?<=\.)\s+(?=[A-Z])/);
+      steps = cleanText.replace(/\.\s+(?=[A-Z])/g, '.|SPLIT|').split('|SPLIT|');
   }
 
   return steps
@@ -94,30 +94,29 @@ export function parseInstructionSteps(text) {
       .filter(s => s.length > 3);
 }
 
+export function formatSingleInstruction(step) {
+  const timeRegex = /(\d+)\s*(min|minute|hr|hour)s?/gi;
+  let result = '';
+  let lastIndex = 0;
+  let match;
+  while ((match = timeRegex.exec(step)) !== null) {
+      const fullMatch = match[0];
+      const num = match[1];
+      const unit = match[2];
+      const before = step.slice(lastIndex, match.index);
+      result += escapeHtml(before);
+      const safeLabel = escapeHtml(fullMatch);
+      result += `<button type="button" class="timer-btn" data-time="${String(num)}" data-unit="${String(unit)}">${safeLabel}</button>`;
+      lastIndex = match.index + fullMatch.length;
+  }
+  result += escapeHtml(step.slice(lastIndex));
+  return result;
+}
+
 export function formatInstructions(text) {
   const steps = parseInstructionSteps(text);
   if (steps.length === 0) return '';
-
-  const timeRegex = /(\d+)\s*(min|minute|hr|hour)s?/gi;
-  
-  const formattedSteps = steps.map(step => {
-      let result = '';
-      let lastIndex = 0;
-      let match;
-      while ((match = timeRegex.exec(step)) !== null) {
-          const fullMatch = match[0];
-          const num = match[1];
-          const unit = match[2];
-          const before = step.slice(lastIndex, match.index);
-          result += escapeHtml(before);
-          const safeLabel = escapeHtml(fullMatch);
-          result += `<button type="button" class="timer-btn" data-time="${String(num)}" data-unit="${String(unit)}">${safeLabel}</button>`;
-          lastIndex = match.index + fullMatch.length;
-      }
-      result += escapeHtml(step.slice(lastIndex));
-      return `<li>${result}</li>`;
-  });
-
+  const formattedSteps = steps.map(step => `<li>${formatSingleInstruction(step)}</li>`);
   return `<ol class="detail-instructions-list">${formattedSteps.join('')}</ol>`;
 }
 
