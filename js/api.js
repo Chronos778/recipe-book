@@ -39,12 +39,19 @@ function processFullMeals(meals) {
   return feedItems;
 }
 
+const apiCache = new Map();
+
 export async function fetchCategories() {
+  if (apiCache.has('categories')) {
+    store.setCategories(apiCache.get('categories'));
+    return;
+  }
   try {
     const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php');
     const data = await response.json();
     if (data.categories) {
       const cats = data.categories.map(c => c.strCategory).sort();
+      apiCache.set('categories', cats);
       store.setCategories(cats);
     }
   } catch (err) {
@@ -67,11 +74,17 @@ export async function fetchRandomFeed() {
 }
 
 export async function fetchSearch(query) {
+  const cacheKey = `search_${query}`;
+  if (apiCache.has(cacheKey)) {
+    store.setFeed(apiCache.get(cacheKey));
+    return;
+  }
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
+    apiCache.set(cacheKey, feed);
     store.setFeed(feed);
   } catch (err) {
     console.error('Error searching recipes:', err);
@@ -79,6 +92,11 @@ export async function fetchSearch(query) {
 }
 
 export async function fetchByCategory(category) {
+  const cacheKey = `cat_${category}`;
+  if (apiCache.has(cacheKey)) {
+    store.setFeed(apiCache.get(cacheKey));
+    return;
+  }
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`);
     const data = await response.json();
@@ -95,6 +113,7 @@ export async function fetchByCategory(category) {
       });
     }
     
+    apiCache.set(cacheKey, feedItems);
     store.setFeed(feedItems);
   } catch (err) {
     console.error('Error fetching category:', err);
