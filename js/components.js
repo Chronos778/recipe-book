@@ -131,15 +131,15 @@ function renderRecipeCards() {
       : category.charAt(0).toUpperCase() + category.slice(1) + ' recipes';
   }
 
+  const frag = document.createDocumentFragment();
+
   feed.forEach((item, i) => {
     const id = item.id;
-    const r = store.state.recipes[id]; // Might be undefined if not loaded
+    const r = store.state.recipes[id];
     
     let meta = { servings: 2, totalTime: '30 min', difficulty: 'Medium' };
-    let desc = '';
     if (r) {
       meta = getRecipeMeta(r);
-      desc = r.description;
     }
 
     const isFav = store.state.favorites.includes(id);
@@ -149,6 +149,7 @@ function renderRecipeCards() {
     const card = document.createElement('div');
     card.className = 'recipe-card';
     card.dataset.category = catName;
+    card.dataset.recipeId = id;
     card.tabIndex = 0;
     card.setAttribute('role', 'button');
     card.setAttribute('aria-label', `View recipe: ${escapeHtml(item.title)}`);
@@ -173,48 +174,10 @@ function renderRecipeCards() {
       <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
     `;
 
-    card.addEventListener('click', async (e) => {
-      if (e.target.closest('.card-save') || e.target.closest('.card-cart')) return;
-      
-      if (!store.state.recipes[id]) {
-        card.style.opacity = '0.6';
-        card.style.pointerEvents = 'none';
-        const api = await import('./api.js');
-        await api.fetchRecipeById(id);
-        card.style.opacity = '1';
-        card.style.pointerEvents = 'auto';
-      }
-      navigateToRecipe(id);
-    });
-
-    card.addEventListener('keydown', (e) => {
-      if (e.target.closest('.card-save') || e.target.closest('.card-cart')) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        card.click();
-      }
-    });
-
-    card.querySelector('.card-save').addEventListener('click', (e) => {
-      e.stopPropagation();
-      store.toggleFavorite(id);
-      if (store.state.favorites.includes(id)) {
-        const rect = e.target.getBoundingClientRect();
-        triggerExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }
-    });
-
-    card.querySelector('.card-cart').addEventListener('click', (e) => {
-      e.stopPropagation();
-      store.toggleCart(id);
-      if (store.state.cart.includes(id)) {
-        const rect = e.target.getBoundingClientRect();
-        triggerExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }
-    });
-
-    grid.appendChild(card);
+    frag.appendChild(card);
   });
+  
+  grid.appendChild(frag);
 }
 
 function refreshCardSaves() {
@@ -451,6 +414,8 @@ export function renderFavoritesGrid() {
   }
   empty.style.display = 'none';
 
+  const frag = document.createDocumentFragment();
+
   favs.forEach(id => {
     const r = store.state.recipes[id];
     if (!r) return;
@@ -484,8 +449,10 @@ export function renderFavoritesGrid() {
         navigateToRecipe(id);
       }
     });
-    grid.appendChild(item);
+    frag.appendChild(item);
   });
+  
+  grid.appendChild(frag);
 }
 
 // -----------------------------------------------------------------------------
@@ -509,6 +476,8 @@ export function renderCartItems() {
   empty.style.display = 'none';
   actions.style.display = 'block';
 
+  const frag = document.createDocumentFragment();
+
   cart.forEach(id => {
     const r = store.state.recipes[id];
     if (!r) return;
@@ -525,8 +494,10 @@ export function renderCartItems() {
         </label>
       `;
     });
-    container.appendChild(group);
+    frag.appendChild(group);
   });
+  
+  container.appendChild(frag);
   
   const clearBtn = document.getElementById('cart-clear');
   if (clearBtn) {

@@ -36,15 +36,67 @@ async function initializeApp() {
 }
 
 function setupGlobalDelegation() {
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', async (e) => {
     // Timer click handlers
     if (e.target.closest('.timer-btn')) {
       const btn = e.target.closest('.timer-btn');
       startTimer(parseInt(btn.dataset.time), btn.dataset.unit);
+      return;
     }
     if (e.target.closest('.timer-close')) {
       const id = parseInt(e.target.closest('.timer-close').dataset.id);
       removeTimer(id);
+      return;
+    }
+
+    // Recipe Card Delegation
+    const saveBtn = e.target.closest('.card-save');
+    if (saveBtn) {
+      e.stopPropagation();
+      const id = saveBtn.dataset.recipeId;
+      store.toggleFavorite(id);
+      if (store.state.favorites.includes(id)) {
+        const rect = saveBtn.getBoundingClientRect();
+        import('./utils.js').then(({triggerExplosion}) => triggerExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2));
+      }
+      return;
+    }
+
+    const cartBtn = e.target.closest('.card-cart');
+    if (cartBtn) {
+      e.stopPropagation();
+      const id = cartBtn.dataset.recipeId;
+      store.toggleCart(id);
+      if (store.state.cart.includes(id)) {
+        const rect = cartBtn.getBoundingClientRect();
+        import('./utils.js').then(({triggerExplosion}) => triggerExplosion(rect.left + rect.width / 2, rect.top + rect.height / 2));
+      }
+      return;
+    }
+
+    const card = e.target.closest('.recipe-card');
+    if (card && e.target.closest('#recipes')) {
+      const id = card.dataset.recipeId;
+      if (!store.state.recipes[id]) {
+        card.style.opacity = '0.6';
+        card.style.pointerEvents = 'none';
+        const api = await import('./api.js');
+        await api.fetchRecipeById(id);
+        card.style.opacity = '1';
+        card.style.pointerEvents = 'auto';
+      }
+      import('./router.js').then(({navigateToRecipe}) => navigateToRecipe(id));
+      return;
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const card = e.target.closest('.recipe-card');
+      if (card && e.target.closest('#recipes')) {
+        e.preventDefault();
+        card.click();
+      }
     }
   });
 
