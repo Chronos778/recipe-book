@@ -7,7 +7,7 @@ import {
   startTimer, removeTimer, renderSkeletonCards, initTimers
 } from './components.js';
 import { 
-  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus 
+  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus, escapeHtml
 } from './utils.js';
 
 /* ── Chrome extension compat ── */
@@ -314,15 +314,46 @@ function setupSheets() {
     openContactSheet();
   });
 
+  let fridgeIngredients = [];
   const fridgeForm = document.getElementById('fridge-form');
+  const fridgeInput = document.getElementById('fridge-input');
+  const pillContainer = document.getElementById('fridge-pill-container');
+  const fridgeSearchBtn = document.getElementById('fridge-search-btn');
+
+  function renderPills() {
+    if (!pillContainer) return;
+    pillContainer.innerHTML = '';
+    fridgeIngredients.forEach((ing, index) => {
+      const pill = document.createElement('div');
+      pill.className = 'ingredient-pill';
+      pill.innerHTML = `
+        ${escapeHtml(ing)}
+        <button type="button" aria-label="Remove ${escapeHtml(ing)}">&times;</button>
+      `;
+      pill.querySelector('button').addEventListener('click', () => {
+        fridgeIngredients.splice(index, 1);
+        renderPills();
+      });
+      pillContainer.appendChild(pill);
+    });
+  }
+
   if (fridgeForm) {
     fridgeForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const input = document.getElementById('fridge-input').value.trim();
+      const input = fridgeInput.value.trim();
       if (!input) return;
-      const ingredients = input.split(',').map(i => i.trim()).filter(Boolean);
-      if (ingredients.length === 0) return;
-      
+      if (!fridgeIngredients.includes(input)) {
+        fridgeIngredients.push(input);
+        renderPills();
+      }
+      fridgeInput.value = '';
+    });
+  }
+
+  if (fridgeSearchBtn) {
+    fridgeSearchBtn.addEventListener('click', () => {
+      if (fridgeIngredients.length === 0) return;
       closeFridgeSheet();
       renderSkeletonCards();
       
@@ -330,8 +361,7 @@ function setupSheets() {
       currentAbortController = new AbortController();
       const signal = currentAbortController.signal;
       
-      fetchByIngredients(ingredients, signal);
-      document.getElementById('fridge-input').value = '';
+      fetchByIngredients(fridgeIngredients, signal);
     });
   }
 }

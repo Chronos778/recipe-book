@@ -163,7 +163,8 @@ export async function fetchByIngredients(ingredientsArray, signal) {
   try {
     let intersection = null;
     for (const ing of ingredientsArray) {
-      const res = await fetch("https://www.themealdb.com/api/json/v1/1/filter.php?i=^", { signal });
+      const formattedIng = ing.toLowerCase().replace(/\s+/g, '_');
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${formattedIng}`, { signal });
       const data = await res.json();
       if (!data.meals) { intersection = []; break; }
       const currentIds = data.meals.map(m => m.idMeal);
