@@ -1,0 +1,172 @@
+/* ═══════════════════════════════════════════════════════════════
+   RECIPE CARD
+   ═══════════════════════════════════════════════════════════════ */
+.recipe-card {
+  position: relative;
+  padding: 26px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2.5px solid var(--card-accent, var(--border));
+  border-radius: var(--r);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  min-height: 190px;
+  transition: transform var(--dur-md) var(--ease), box-shadow var(--dur-md) var(--ease), border-color var(--dur);
+  animation: enter var(--dur-lg) var(--ease) both;
+}
+
+.recipe-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-md);
+}
+
+.recipe-card:active {
+  transform: translateY(0);
+}
+
+.recipe-card:focus-visible {
+  box-shadow: var(--sh-md);
+}
+
+
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-cat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--card-accent, var(--ink-3));
+}
+
+.cat-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* Bookmark save button */
+.card-save {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-sm);
+  color: var(--ink-4);
+  transition: color var(--dur), background var(--dur), transform var(--dur);
+}
+
+.card-save:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.card-save.saved {
+  color: var(--accent);
+}
+
+.card-save.saved:hover {
+  transform: scale(1.08);
+}
+
+.card-title {
+  font-family: var(--f-display);
+  font-size: 1.35rem;
+  line-height: 1.15;
+  color: var(--ink);
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.card-desc {
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  line-height: 1.5;
+  margin-bottom: 10px;
+  flex: 1;
+}
+
+.card-meta {
+  font-size: 0.73rem;
+  color: var(--ink-3);
+  margin-bottom: 14px;
+}
+
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  margin-top: auto;
+}
+
+.card-cta .arrow {
+  display: inline-block;
+  transition: transform var(--dur) var(--ease);
+}
+
+.recipe-card:hover .card-cta .arrow {
+  transform: translateX(3px);
+}
+/* ═══════════════════════════════════════════════════════════════
+   SKELETON LOADERS
+   ═══════════════════════════════════════════════════════════════ */
+.skeleton-card {
+  position: relative;
+  padding: 26px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 2.5px solid var(--border);
+  border-radius: 8px; /* var(--r) usually */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-dim) 25%, var(--border) 50%, var(--surface-dim) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+.skeleton-img {
+  height: 140px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 80%;
+  margin-bottom: 8px;
+}
+
+.skeleton-meta {
+  height: 16px;
+  width: 60%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

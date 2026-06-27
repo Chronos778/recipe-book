@@ -1,20 +1,27 @@
 {
-    "name": "Cooking book",
-    "short_name": "Cook book",
+    "name": "Foodbook",
+    "short_name": "Foodbook",
+    "description": "A premium recipe and cooking app",
     "start_url": "./index.html",
+    "scope": "./",
+    "id": "/",
     "display": "standalone",
-    "background_color": "#ff6347",
-    "theme_color": "#ff6347",
+    "orientation": "portrait",
+    "categories": ["food", "lifestyle"],
+    "background_color": "#FDFBF7",
+    "theme_color": "#C44C27",
     "icons": [
         {
             "src": "images/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "images/icon-512.png",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
         }
     ]
 }

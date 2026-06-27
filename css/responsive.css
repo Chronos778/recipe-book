@@ -1,0 +1,289 @@
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .recipe-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .recipe-card {
+    padding: 22px;
+    min-height: 0;
+  }
+
+  .panel-drawer {
+    width: 100%;
+    border-left: none;
+  }
+
+  .search-box {
+    width: 150px;
+  }
+
+  .search-box:focus-within {
+    width: 190px;
+  }
+
+  #page-header {
+    padding: 40px var(--page-px) 28px;
+  }
+
+  #page-header h1 {
+    font-size: 2.2rem;
+  }
+
+  /* Mobile Nav Elements */
+  .nav-link:not(.mobile-only):not(.nav-theme) {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+    padding-right: 0;
+  }
+
+  /* Mobile Menu Overlay */
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+  }
+
+  .mobile-menu-backdrop {
+    position: absolute;
+    inset: 0;
+    background: var(--overlay-bg);
+    animation: fadeIn 0.2s ease both;
+  }
+
+  .mobile-menu-content {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 280px;
+    background: var(--surface);
+    box-shadow: var(--sh-xl);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    animation: slideRight 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 40px;
+  }
+
+  .mobile-link {
+    font-family: var(--f-display);
+    font-size: 1.5rem;
+    text-align: left;
+    padding: 10px 0;
+    color: var(--ink);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  #mobile-menu-close {
+    align-self: flex-end;
+  }
+}
+
+@media (min-width: 769px) {
+
+  .mobile-only,
+  .mobile-menu {
+    display: none !important;
+  }
+}
+
+@media (max-width: 500px) {
+  :root {
+    --nav-h: 56px;
+  }
+
+  .recipe-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .recipe-card {
+    padding: 20px;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  #page-header h1 {
+    font-size: 2rem;
+  }
+
+  .header-sub {
+    font-size: 0.88rem;
+    margin-top: 10px;
+  }
+
+  .cat {
+    padding: 5px 10px;
+    font-size: 0.76rem;
+  }
+
+  .search-box {
+    width: 110px;
+  }
+
+  .search-box:focus-within {
+    width: 160px;
+  }
+
+  .nav-link {
+    padding: 6px 8px;
+    font-size: 0.76rem;
+  }
+
+  .panel-body {
+    padding: 22px 18px;
+  }
+
+  .detail-title {
+    font-size: 1.5rem;
+  }
+
+  .detail-toolbar {
+    flex-wrap: wrap;
+  }
+
+  .detail-toolbar > button {
+    flex: 1 1 calc(50% - 4px);
+    text-align: center;
+  }
+
+  .cooking-top {
+    padding: 15px;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .cooking-body {
+    padding: 20px;
+  }
+  
+  .cooking-recipe-title {
+    margin-bottom: 20px;
+  }
+  
+  .cooking-bottom {
+    padding: 15px;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cooking-btn-secondary,
+  .cooking-btn-primary {
+    width: 100%;
+  }
+
+  .active-timers-container {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .active-timer {
+    padding: 8px 12px;
+  }
+
+  .timer-text {
+    font-size: 1.1rem;
+  }
+
+  .servings-control {
+    gap: 6px;
+  }
+
+  .serve-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .macro-display {
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+  }
+  .macro-legend {
+    width: 100%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════════════════════ */
+@media print {
+
+  #topnav,
+  #page-header,
+  #cat-bar,
+  #main,
+  #footer,
+  #cart-sheet,
+  #contact-sheet,
+  #fav-sheet,
+  #mobile-menu,
+  #active-timers,
+  #cooking-mode-overlay,
+  .detail-toolbar,
+  .detail-timer,
+  .panel-top,
+  .panel-backdrop,
+  .servings-control {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible !important;
+  }
+  
+  body.dark {
+    background: #fff !important;
+    color: #000 !important;
+    --ink: #111;
+    --ink-2: #333;
+    --ink-3: #555;
+    --surface: #fff;
+    --border: #ccc;
+  }
+
+  #overlay {
+    position: static !important;
+    background: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  
+  .panel-drawer {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    box-shadow: none !important;
+    border: none !important;
+    animation: none !important;
+    overflow: visible !important;
+    transform: none !important;
+  }
+
+  .detail-hero {
+    border-radius: 0;
+    max-height: 400px;
+  }
+}
+

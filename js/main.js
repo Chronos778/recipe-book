@@ -1,13 +1,13 @@
 import { store } from './store.js';
-import { fetchCategories, fetchRandomFeed, fetchSearch, fetchByCategory } from './api.js';
+import { fetchCategories, fetchRandomFeed, fetchSearch, fetchByCategory, fetchByIngredients } from './api.js';
 import { setupRouter, navigateHome } from './router.js';
 import { 
   setupReactivity, renderFavoritesGrid, renderCartItems,
   closeOverlay, closeCookingMode, prevCookingStep, nextCookingStep,
-  startTimer, removeTimer
+  startTimer, removeTimer, renderSkeletonCards, initTimers
 } from './components.js';
 import { 
-  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus 
+  rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus, escapeHtml
 } from './utils.js';
 
 /* ── Chrome extension compat ── */
@@ -24,7 +24,18 @@ async function initializeApp() {
   setupRouter(); // checks URL and sets activeRecipeId
   
   fetchCategories();
-  fetchRandomFeed();
+  renderSkeletonCards();
+  initTimers();
+  
+  const searchBar = document.getElementById('search-bar');
+  if (searchBar && searchBar.value.trim() !== '') {
+    store.setSearchQuery(searchBar.value.trim());
+    fetchSearch(searchBar.value.trim());
+  } else if (store.state.activeCategory && store.state.activeCategory !== 'all') {
+    fetchByCategory(store.state.activeCategory);
+  } else {
+    fetchRandomFeed();
+  }
 
   initDarkMode();
   setupSearch();
@@ -121,23 +132,43 @@ function setupScrollDetect() {
 /* ═══════════════════════════════════════════════════════════════
    SEARCH & CATEGORY FILTER
    ═══════════════════════════════════════════════════════════════ */
+let currentAbortController = null;
+
 function setupSearch() {
   const searchBar = document.getElementById('search-bar');
+  const searchForm = document.getElementById('search-form');
   let debounceTimeout;
   
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      searchBar.blur();
+    });
+  }
+
   searchBar.addEventListener('input', (e) => {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
       const query = e.target.value.trim();
       store.setSearchQuery(query);
       
-      const grid = document.getElementById('recipes');
-      if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Searching database...</div>';
+      if (query !== '') {
+        // Reset category to "Discover" visually and in state
+        const hiddenSelect = document.getElementById('category-filter');
+        if (hiddenSelect) hiddenSelect.value = 'all';
+        store.setActiveCategory('all');
+      }
+
+      renderSkeletonCards();
+      
+      if (currentAbortController) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
       
       if (query === '') {
-        fetchRandomFeed();
+        fetchRandomFeed(signal);
       } else {
-        fetchSearch(query);
+        fetchSearch(query, signal);
       }
     }, 300);
   });
@@ -166,13 +197,22 @@ function setupCategoryTabs() {
     if (hiddenSelect) hiddenSelect.value = cat;
     store.setActiveCategory(cat);
     
-    const grid = document.getElementById('recipes');
-    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Loading category...</div>';
+    const searchBar = document.getElementById('search-bar');
+    if (searchBar && searchBar.value.trim() !== '') {
+      searchBar.value = '';
+      store.setSearchQuery('');
+    }
+
+    renderSkeletonCards();
+    
+    if (currentAbortController) currentAbortController.abort();
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
     
     if (cat === 'all') {
-      fetchRandomFeed();
+      fetchRandomFeed(signal);
     } else {
-      fetchByCategory(cat);
+      fetchByCategory(cat, signal);
     }
   });
 }
@@ -184,12 +224,14 @@ function setupSheets() {
   const overlay = document.getElementById('overlay');
   const favSheet = document.getElementById('fav-sheet');
   const cartSheet = document.getElementById('cart-sheet');
+  const fridgeSheet = document.getElementById('fridge-sheet');
   const contactSheet = document.getElementById('contact-sheet');
 
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('hidden')) trapFocus(e, overlay.querySelector('.panel-drawer'));
     else if (!favSheet.classList.contains('hidden')) trapFocus(e, favSheet.querySelector('.modal-box'));
     else if (!cartSheet.classList.contains('hidden')) trapFocus(e, cartSheet.querySelector('.modal-box'));
+    else if (!fridgeSheet.classList.contains('hidden')) trapFocus(e, fridgeSheet.querySelector('.fridge-panel'));
     else if (!contactSheet.classList.contains('hidden')) trapFocus(e, contactSheet.querySelector('.modal-box'));
     else {
       const mobileMenu = document.getElementById('mobile-menu');
@@ -218,6 +260,10 @@ function setupSheets() {
   document.getElementById('btn-cart').addEventListener('click', openCartSheet);
   document.getElementById('cart-sheet-close').addEventListener('click', closeCartSheet);
   document.querySelector('#cart-sheet .modal-backdrop').addEventListener('click', closeCartSheet);
+
+  document.getElementById('btn-fridge').addEventListener('click', openFridgeSheet);
+  document.getElementById('fridge-sheet-close').addEventListener('click', closeFridgeSheet);
+  document.querySelector('#fridge-sheet .modal-backdrop').addEventListener('click', closeFridgeSheet);
 
   document.getElementById('btn-contact').addEventListener('click', openContactSheet);
   document.getElementById('contact-sheet-close').addEventListener('click', closeContactSheet);
@@ -267,6 +313,65 @@ function setupSheets() {
     closeMobileMenu();
     openContactSheet();
   });
+
+  let fridgeIngredients = [];
+  const fridgeForm = document.getElementById('fridge-form');
+  const fridgeInput = document.getElementById('fridge-input');
+  const pillContainer = document.getElementById('fridge-pill-container');
+  const fridgeSearchBtn = document.getElementById('fridge-search-btn');
+
+  function renderPills() {
+    if (!pillContainer) return;
+    pillContainer.innerHTML = '';
+    fridgeIngredients.forEach((ing, index) => {
+      const pill = document.createElement('div');
+      pill.className = 'ingredient-pill';
+      pill.innerHTML = `
+        ${escapeHtml(ing)}
+        <button type="button" aria-label="Remove ${escapeHtml(ing)}">&times;</button>
+      `;
+      pill.querySelector('button').addEventListener('click', () => {
+        fridgeIngredients.splice(index, 1);
+        renderPills();
+      });
+      pillContainer.appendChild(pill);
+    });
+  }
+
+  if (fridgeInput) {
+    fridgeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const input = fridgeInput.value.trim();
+        if (!input) return;
+        if (!fridgeIngredients.includes(input)) {
+          fridgeIngredients.push(input);
+          renderPills();
+        }
+        fridgeInput.value = '';
+      }
+    });
+  }
+
+  if (fridgeForm) {
+    fridgeForm.addEventListener('submit', (e) => {
+      e.preventDefault(); // Catch any stray form submissions
+    });
+  }
+
+  if (fridgeSearchBtn) {
+    fridgeSearchBtn.addEventListener('click', () => {
+      if (fridgeIngredients.length === 0) return;
+      closeFridgeSheet();
+      renderSkeletonCards();
+      
+      if (currentAbortController) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
+      
+      fetchByIngredients(fridgeIngredients, signal);
+    });
+  }
 }
 
 function openFavSheet() {
@@ -283,14 +388,23 @@ function closeFavSheet() {
 }
 
 function openCartSheet() {
-  const sheet = document.getElementById('cart-sheet');
-  rememberFocus();
-  sheet.classList.remove('hidden');
-  focusFirstElement(sheet.querySelector('.modal-box'));
+  document.getElementById('cart-sheet').classList.remove('hidden');
   syncBodyScrollLock();
+  focusFirstElement(document.getElementById('cart-sheet'));
 }
 function closeCartSheet() {
   document.getElementById('cart-sheet').classList.add('hidden');
+  syncBodyScrollLock();
+  restoreFocus();
+}
+
+function openFridgeSheet() {
+  document.getElementById('fridge-sheet').classList.remove('hidden');
+  syncBodyScrollLock();
+  focusFirstElement(document.getElementById('fridge-sheet'));
+}
+function closeFridgeSheet() {
+  document.getElementById('fridge-sheet').classList.add('hidden');
   syncBodyScrollLock();
   restoreFocus();
 }
@@ -346,6 +460,7 @@ function setupKeyboardShortcuts() {
       const overlay = document.getElementById('overlay');
       const favSheet = document.getElementById('fav-sheet');
       const cartSheet = document.getElementById('cart-sheet');
+      const fridgeSheet = document.getElementById('fridge-sheet');
       const contactSheet = document.getElementById('contact-sheet');
       const mobileMenu = document.getElementById('mobile-menu');
       const cookingMode = document.getElementById('cooking-mode-overlay');
@@ -360,9 +475,17 @@ function setupKeyboardShortcuts() {
         closeFavSheet();
       } else if (!cartSheet.classList.contains('hidden')) {
         closeCartSheet();
+      } else if (!fridgeSheet.classList.contains('hidden')) {
+        closeFridgeSheet();
       } else if (!contactSheet.classList.contains('hidden')) {
         closeContactSheet();
       }
     }
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js').catch(err => {
+    console.error('Service Worker registration failed:', err);
   });
 }

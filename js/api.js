@@ -1,11 +1,12 @@
 import { store } from './store.js';
+import { idbGet, idbSet } from './idb.js';
 
 // Helper to parse full meal details and return a lightweight feed item
 function processFullMeals(meals) {
   const newRecipes = {};
   const feedItems = [];
 
-  if (meals) {
+  if (meals && Array.isArray(meals)) {
     meals.forEach(meal => {
       const ingredients = [];
       for (let i = 1; i <= 20; i++) {
@@ -39,70 +40,81 @@ function processFullMeals(meals) {
   return feedItems;
 }
 
-const apiCache = new Map();
-
-export async function fetchCategories() {
-  if (apiCache.has('categories')) {
-    store.setCategories(apiCache.get('categories'));
+export async function fetchCategories(signal) {
+  const cached = await idbGet('categories');
+  if (cached) {
+    store.setCategories(cached);
     return;
   }
   try {
-    const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php');
+    const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php', { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
-    if (data.categories) {
+    if (data.categories && Array.isArray(data.categories)) {
       const cats = data.categories.map(c => c.strCategory).sort();
-      apiCache.set('categories', cats);
+      idbSet('categories', cats);
       store.setCategories(cats);
     }
   } catch (err) {
-    console.error('Error fetching categories:', err);
+    if (err.name !== 'AbortError') console.error('Error fetching categories:', err);
   }
 }
 
-export async function fetchRandomFeed() {
+export async function fetchRandomFeed(signal) {
   try {
     const letters = 'bcdefghiklmnoprstvw';
     const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${randomLetter}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${randomLetter}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
     store.setFeed(feed);
   } catch (err) {
-    console.error('Error loading random feed:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error loading random feed:', err);
+      store.setFeed([]);
+    }
   }
 }
 
-export async function fetchSearch(query) {
+export async function fetchSearch(query, signal) {
   const cacheKey = `search_${query}`;
-  if (apiCache.has(cacheKey)) {
-    store.setFeed(apiCache.get(cacheKey));
+  const cached = await idbGet(cacheKey);
+  if (cached) {
+    store.setFeed(cached);
     return;
   }
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
-    apiCache.set(cacheKey, feed);
+    idbSet(cacheKey, feed);
     store.setFeed(feed);
   } catch (err) {
-    console.error('Error searching recipes:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error searching recipes:', err);
+      store.setFeed([]);
+    }
   }
 }
 
-export async function fetchByCategory(category) {
+export async function fetchByCategory(category, signal) {
   const cacheKey = `cat_${category}`;
-  if (apiCache.has(cacheKey)) {
-    store.setFeed(apiCache.get(cacheKey));
+  const cached = await idbGet(cacheKey);
+  if (cached) {
+    store.setFeed(cached);
     return;
   }
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feedItems = [];
-    if (data.meals) {
+    if (data.meals && Array.isArray(data.meals)) {
       data.meals.forEach(meal => {
         feedItems.push({
           id: meal.idMeal,
@@ -113,24 +125,77 @@ export async function fetchByCategory(category) {
       });
     }
     
-    apiCache.set(cacheKey, feedItems);
+    idbSet(cacheKey, feedItems);
     store.setFeed(feedItems);
   } catch (err) {
-    console.error('Error fetching category:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error fetching category:', err);
+      store.setFeed([]);
+    }
   }
 }
 
-export async function fetchRecipeById(id) {
-  // If we already have the full details cached, skip fetch
+export async function fetchRecipeById(id, signal) {
+  // If we already have the full details cached in memory, skip fetch
   if (store.state.recipes[id]) return store.state.recipes[id];
   
+  // Try IDB cache
+  const cachedRecipe = await idbGet(`recipe_${id}`);
+  if (cachedRecipe) {
+    store.setRecipes({ ...store.state.recipes, [id]: cachedRecipe });
+    return cachedRecipe;
+  }
+
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     processFullMeals(data.meals);
+    
+    // Save the fully processed recipe to IDB
+    if (store.state.recipes[id]) {
+      idbSet(`recipe_${id}`, store.state.recipes[id]);
+    }
+    
     return store.state.recipes[id];
   } catch (err) {
-    console.error('Error fetching recipe details:', err);
+    if (err.name !== 'AbortError') console.error('Error fetching recipe details:', err);
     return null;
+  }
+}
+
+export async function fetchByIngredients(ingredientsArray, signal) {
+  try {
+    let intersection = null;
+    for (const ing of ingredientsArray) {
+      const formattedIng = ing.toLowerCase().replace(/\s+/g, '_');
+      const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${formattedIng}`, { signal });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+      const data = await res.json();
+      if (!data.meals || !Array.isArray(data.meals)) { intersection = []; break; }
+      const currentIds = data.meals.map(m => m.idMeal);
+      if (intersection === null) {
+        intersection = currentIds;
+      } else {
+        intersection = intersection.filter(id => currentIds.includes(id));
+      }
+      if (intersection.length === 0) break;
+    }
+    if (!intersection || intersection.length === 0) {
+      store.setFeed([]);
+      return;
+    }
+    
+    const feedItems = await Promise.all(intersection.map(async id => {
+      const r = await fetchRecipeById(id, signal);
+      if (!r) return null;
+      return { id, title: r.title, image: r.image, category: r.category };
+    }));
+    store.setFeed(feedItems.filter(Boolean));
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('Error fetching by ingredients:', err);
+      store.setFeed([]);
+    }
   }
 }
