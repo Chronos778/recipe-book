@@ -136,8 +136,16 @@ let currentAbortController = null;
 
 function setupSearch() {
   const searchBar = document.getElementById('search-bar');
+  const searchForm = document.getElementById('search-form');
   let debounceTimeout;
   
+  if (searchForm) {
+    searchForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      searchBar.blur();
+    });
+  }
+
   searchBar.addEventListener('input', (e) => {
     clearTimeout(debounceTimeout);
     debounceTimeout = setTimeout(() => {
