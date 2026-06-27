@@ -421,6 +421,8 @@ export function viewRecipe(recipeId) {
 
   details.querySelector('#cooking-mode-btn').addEventListener('click', () => openCookingMode(r));
   details.querySelector('#print-btn').addEventListener('click', () => window.print());
+  const exportBtn = details.querySelector('#export-btn');
+  if (exportBtn) exportBtn.addEventListener('click', () => exportRecipeCard(r));
 }
 
 export function closeOverlay() {
@@ -755,4 +757,41 @@ export function renderTimers() {
     
     container.appendChild(tContent);
   });
+}
+
+async function exportRecipeCard(r) {
+  const template = document.getElementById('export-template');
+  if (!template || !window.html2canvas) return;
+  const clone = template.content.cloneNode(true);
+  const card = clone.querySelector('.export-card');
+  
+  card.querySelector('.export-hero').src = r.image;
+  card.querySelector('.export-cat').textContent = r.category || 'Recipe';
+  card.querySelector('.export-title').textContent = r.title;
+  
+  const macros = r.ingredients ? renderMacros(generateMacrosFromIngredients(r.ingredients), 1) : '';
+  card.querySelector('.export-macros').innerHTML = macros;
+  
+  let ings = '';
+  if (r.ingredients) {
+    ings = r.ingredients.map(i => escapeHtml(i)).join('<br>');
+  }
+  card.querySelector('.export-ingredients').innerHTML = ings;
+  
+  card.style.position = 'fixed';
+  card.style.top = '-9999px';
+  card.style.left = '-9999px';
+  document.body.appendChild(card);
+  
+  try {
+    const canvas = await html2canvas(card, { scale: 2, useCORS: true, allowTaint: true });
+    const link = document.createElement('a');
+    link.download = r.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  } catch (err) {
+    console.error('Export failed', err);
+  } finally {
+    document.body.removeChild(card);
+  }
 }

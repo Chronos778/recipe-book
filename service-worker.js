@@ -15,6 +15,7 @@ const urlsToCache = [
     './js/router.js',
     './js/components.js',
     './js/idb.js',
+    './js/html2canvas.min.js',
     './manifest.json',
 ];
 

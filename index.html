@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/modals.css">
   <link rel="stylesheet" href="css/responsive.css">
+  <script src="js/html2canvas.min.js"></script>
   <script type="module" src="js/main.js"></script>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'self'; connect-src 'self' https://www.themealdb.com; img-src * data:; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self';">
@@ -46,6 +47,9 @@
       <input type="text" id="search-bar" placeholder="Search recipes…" aria-label="Search recipes" autocomplete="off">
     </form>
     <div class="nav-actions">
+      <button id="btn-fridge" type="button" class="nav-link" aria-label="What's in my Fridge?">
+        Fridge
+      </button>
       <button id="btn-favs" type="button" class="nav-link" aria-label="Saved recipes">
         Saved
         <span id="fav-count" class="count-pill hidden">0</span>
@@ -153,6 +157,25 @@
       </div>
       <div id="favorites-grid" class="fav-grid"></div>
       <p id="no-favorites" class="empty">No saved recipes yet.</p>
+    </div>
+  </div>
+
+  <!-- 🥬 WHAT'S IN MY FRIDGE SHEET 🥬 -->
+  <div id="fridge-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="fridge-sheet-title">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box" tabindex="-1">
+      <div class="modal-head">
+        <h2 id="fridge-sheet-title">What's in my Fridge?</h2>
+        <button id="fridge-sheet-close" type="button" class="modal-x" aria-label="Close">&times;</button>
+      </div>
+      <div class="fridge-content" style="padding: 24px;">
+        <p style="margin-bottom: 16px; color: var(--ink-2); line-height: 1.5;">Enter 3-4 ingredients you have on hand, separated by commas (e.g., "chicken, garlic, onions"). We'll find recipes that use all of them.</p>
+        <form id="fridge-form" style="display: flex; gap: 8px; margin-bottom: 24px;">
+          <input type="text" id="fridge-input" placeholder="Ingredients..." style="flex: 1; padding: 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-family: var(--f-body); font-size: 1rem;">
+          <button type="submit" class="btn-save" style="margin: 0;">Search</button>
+        </form>
+        <p id="fridge-status" class="empty hidden" style="margin:0;"></p>
+      </div>
     </div>
   </div>
 
@@ -319,6 +342,27 @@
         <button type="button" class="btn-save" id="cart-add-btn"></button>
         <button type="button" class="btn-cooking-mode btn-save" id="cooking-mode-btn">Cooking Mode</button>
         <button type="button" class="btn-print-detail" id="print-btn">Print</button>
+        <button type="button" class="btn-print-detail" id="export-btn">Share</button>
+      </div>
+    </div>
+  </template>
+
+  <template id="export-template">
+    <div class="export-card" style="width: 1080px; height: 1080px; background: var(--bg); padding: 60px; display: flex; flex-direction: column; position: relative; font-family: var(--f-body); color: var(--ink); box-sizing: border-box;">
+      <div style="flex: 1; border-radius: 24px; overflow: hidden; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+        <img class="export-hero" src="" style="width: 100%; height: 100%; object-fit: cover;">
+        <div style="position: absolute; inset: 0; background: linear-gradient(to top, rgba(26,24,21,0.9) 0%, transparent 60%);"></div>
+        <div style="position: absolute; bottom: 40px; left: 40px; right: 40px; color: #fff;">
+          <div class="export-cat" style="text-transform: uppercase; letter-spacing: 0.1em; font-size: 1.2rem; font-weight: 600; margin-bottom: 12px; color: var(--primary);"></div>
+          <h1 class="export-title" style="font-family: var(--f-display); font-size: 5rem; line-height: 1.1; margin: 0 0 20px 0; font-weight: 400;"></h1>
+          <div style="display: flex; gap: 24px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 24px;">
+            <div class="export-macros" style="flex: 1; font-size: 1.2rem; opacity: 0.9;"></div>
+            <div class="export-ingredients" style="flex: 2; font-size: 1.2rem; opacity: 0.9; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 40px; font-family: var(--f-display); font-size: 2.5rem; color: var(--primary);">
+        Cooked.
       </div>
     </div>
   </template>

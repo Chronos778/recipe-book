@@ -158,3 +158,37 @@ export async function fetchRecipeById(id, signal) {
     return null;
   }
 }
+
+export async function fetchByIngredients(ingredientsArray, signal) {
+  try {
+    let intersection = null;
+    for (const ing of ingredientsArray) {
+      const res = await fetch("https://www.themealdb.com/api/json/v1/1/filter.php?i=^", { signal });
+      const data = await res.json();
+      if (!data.meals) { intersection = []; break; }
+      const currentIds = data.meals.map(m => m.idMeal);
+      if (intersection === null) {
+        intersection = currentIds;
+      } else {
+        intersection = intersection.filter(id => currentIds.includes(id));
+      }
+      if (intersection.length === 0) break;
+    }
+    if (!intersection || intersection.length === 0) {
+      store.setFeed([]);
+      return;
+    }
+    
+    const feedItems = await Promise.all(intersection.map(async id => {
+      const r = await fetchRecipeById(id, signal);
+      if (!r) return null;
+      return { id: r.id, title: r.title, image: r.image, category: r.category };
+    }));
+    store.setFeed(feedItems.filter(Boolean));
+  } catch (err) {
+    if (err.name !== 'AbortError') {
+      console.error('Error fetching by ingredients:', err);
+      store.setFeed([]);
+    }
+  }
+}
