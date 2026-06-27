@@ -114,15 +114,10 @@ export function renderSkeletonCards(count = 8) {
   if (!grid) return;
   grid.innerHTML = '';
   const frag = document.createDocumentFragment();
+  const tmpl = document.getElementById('skeleton-card-template');
+  if (!tmpl) return;
   for (let i = 0; i < count; i++) {
-    const card = document.createElement('div');
-    card.className = 'skeleton-card';
-    card.innerHTML = `
-      <div class="skeleton skeleton-img"></div>
-      <div class="skeleton skeleton-title"></div>
-      <div class="skeleton skeleton-meta"></div>
-    `;
-    frag.appendChild(card);
+    frag.appendChild(tmpl.content.cloneNode(true));
   }
   grid.appendChild(frag);
 }
@@ -164,35 +159,50 @@ function renderRecipeCards() {
     const inCart = store.state.cart.includes(id);
     const catName = escapeHtml(item.category || 'Other');
     
-    const card = document.createElement('div');
-    card.className = 'recipe-card';
+    const tmpl = document.getElementById('recipe-card-template');
+    if (!tmpl) return;
+    const cardContent = tmpl.content.cloneNode(true);
+    const card = cardContent.querySelector('.recipe-card');
+
     card.dataset.category = catName;
     card.dataset.recipeId = id;
-    card.tabIndex = 0;
-    card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', `View recipe: ${escapeHtml(item.title)}`);
+    card.setAttribute('aria-label', `View recipe: ${item.title}`);
     card.style.setProperty('--card-accent', catColor(catName));
     card.style.animationDelay = `${0.24 + i * 0.05}s`;
 
-    card.innerHTML = `
-      <div class="card-top">
-        <span class="card-cat"><span class="cat-dot"></span>${catName}</span>
-        <div class="card-actions">
-           <button type="button" class="card-cart${inCart ? ' in-cart' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${inCart ? 'Remove from cart' : 'Add to cart'}">
-             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-           </button>
-           <button type="button" class="card-save${isFav ? ' saved' : ''}" data-recipe-id="${escapeHtml(id)}" aria-label="${isFav ? 'Remove from saved' : 'Save recipe'}">${isFav ? BOOKMARK_IN : BOOKMARK_OUT}</button>
-        </div>
-      </div>
-      <div class="card-img-wrap" style="height: 140px; overflow: hidden; border-radius: 8px; margin-bottom: 12px; background: #222;">
-         <img src="${item.image}/preview" alt="${escapeHtml(item.title)}" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
-      </div>
-      <h3 class="card-title">${escapeHtml(item.title)}</h3>
-      ${r ? `<p class="card-meta">Serves ${escapeHtml(meta.servings)} · ${escapeHtml(meta.totalTime)} · ${escapeHtml(meta.difficulty)}</p>` : ''}
-      <span class="card-cta">Read recipe <span class="arrow">\u2192</span></span>
-    `;
+    card.querySelector('.cat-name').textContent = catName;
+    
+    const cartBtn = card.querySelector('.card-cart');
+    cartBtn.dataset.recipeId = id;
+    if (inCart) {
+      cartBtn.classList.add('in-cart');
+      cartBtn.setAttribute('aria-label', 'Remove from cart');
+    }
+    
+    const saveBtn = card.querySelector('.card-save');
+    saveBtn.dataset.recipeId = id;
+    saveBtn.innerHTML = isFav ? BOOKMARK_IN : BOOKMARK_OUT;
+    if (isFav) {
+      saveBtn.classList.add('saved');
+      saveBtn.setAttribute('aria-label', 'Remove from saved');
+    } else {
+      saveBtn.setAttribute('aria-label', 'Save recipe');
+    }
+    
+    const img = card.querySelector('.card-img');
+    img.src = `${item.image}/preview`;
+    img.alt = item.title;
+    
+    card.querySelector('.card-title').textContent = item.title;
+    
+    const metaEl = card.querySelector('.card-meta');
+    if (r) {
+      metaEl.textContent = `Serves ${meta.servings} · ${meta.totalTime} · ${meta.difficulty}`;
+    } else {
+      metaEl.remove();
+    }
 
-    frag.appendChild(card);
+    frag.appendChild(cardContent);
   });
   
   grid.appendChild(frag);
@@ -238,10 +248,13 @@ export async function renderRecentViews() {
   const api = await import('./api.js');
   
   const missingIds = store.state.recentViews.filter(id => !store.state.recipes[id]);
-  if (missingIds.length > 0) {
-    list.innerHTML = '<span style="color:var(--ink-3); font-size:0.9rem; padding:4px 10px;">Loading...</span>';
-    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
-  }
+    if (missingIds.length > 0) {
+      list.textContent = 'Loading...';
+      list.style.color = 'var(--ink-3)';
+      list.style.fontSize = '0.9rem';
+      list.style.padding = '4px 10px';
+      await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+    }
 
   let validRecents = [];
   for (const id of store.state.recentViews) {
@@ -261,9 +274,9 @@ export async function renderRecentViews() {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'recent-pill';
-    const dot = document.createElement('span');
-    dot.className = 'cat-dot';
-    dot.style.color = catColor(recipe.category);
+      const dot = document.createElement('span');
+      dot.className = 'cat-dot';
+      dot.style.background = catColor(recipe.category);
     button.appendChild(dot);
     button.appendChild(document.createTextNode(recipe.title));
     button.addEventListener('click', () => navigateToRecipe(id));
@@ -288,67 +301,62 @@ export function viewRecipe(recipeId) {
   const inCart = store.state.cart.includes(recipeId);
   const color = catColor(r.category);
   const meta = getRecipeMeta(r);
+  
+  const tmpl = document.getElementById('recipe-detail-template');
+  if (!tmpl) return;
 
-  details.innerHTML = `
-    <img src="${escapeHtml(r.image)}" alt="${escapeHtml(r.title)}" class="detail-hero" loading="lazy" decoding="async">
-    <div class="detail-content">
-      <div class="detail-cat-badge" style="color:${color}">
-        <span class="cat-dot" style="background:${color}"></span>
-        ${escapeHtml(r.category)}
-      </div>
-      <h2 id="recipe-detail-title" class="detail-title">${escapeHtml(r.title)}</h2>
+  details.textContent = '';
+  const detailContent = tmpl.content.cloneNode(true);
+  
+  const hero = detailContent.querySelector('.detail-hero');
+  hero.src = r.image;
+  hero.alt = r.title;
 
-      <div class="detail-meta" aria-label="Recipe details">
-        <span class="meta-chip">Serves ${escapeHtml(meta.servings)}</span>
-        <span class="meta-chip">${escapeHtml(meta.totalTime)}</span>
-        <span class="meta-chip">${escapeHtml(meta.difficulty)}</span>
-      </div>
+  const badge = detailContent.querySelector('.detail-cat-badge');
+  badge.style.color = color;
+  detailContent.querySelector('.cat-dot').style.background = color;
+  detailContent.querySelector('.cat-name').textContent = r.category;
+  
+  detailContent.getElementById('recipe-detail-title').textContent = r.title;
+  
+  detailContent.querySelector('.meta-servings').textContent = `Serves ${meta.servings}`;
+  detailContent.querySelector('.meta-time').textContent = meta.totalTime;
+  detailContent.querySelector('.meta-diff').textContent = meta.difficulty;
+  
+  detailContent.querySelector('.serve-count').textContent = `${meta.servings} servings`;
+  
+  const ingList = detailContent.getElementById('ing-list');
+  const ingItemTmpl = document.getElementById('cart-ingredient-template');
+  r.ingredients.forEach(i => {
+    const li = document.createElement('li');
+    if (ingItemTmpl) {
+       const itemContent = ingItemTmpl.content.cloneNode(true);
+       itemContent.querySelector('.ing-text').textContent = i;
+       itemContent.querySelector('label').className = 'ing-label';
+       li.appendChild(itemContent);
+    } else {
+       li.textContent = i;
+    }
+    ingList.appendChild(li);
+  });
+  
+  const methodContainer = detailContent.getElementById('method-container');
+  methodContainer.innerHTML = formatInstructions(r.instructions);
 
-      <div class="detail-section">
-        <div class="detail-section-head">
-            <h3>Ingredients</h3>
-            <div class="servings-control">
-                <button type="button" class="serve-btn serve-minus" aria-label="Decrease servings">&minus;</button>
-                <span class="serve-count" aria-live="polite">${escapeHtml(meta.servings)} servings</span>
-                <button type="button" class="serve-btn serve-plus" aria-label="Increase servings">&plus;</button>
-            </div>
-        </div>
-        <ul class="detail-list ingredients-list" id="ing-list">
-          ${r.ingredients.map(i => `
-            <li>
-              <label class="ing-label">
-                <input type="checkbox">
-                <span class="ing-text">${escapeHtml(i)}</span>
-              </label>
-            </li>
-        `).join('')}
-        </ul>
-      </div>
+  const macroContainer = detailContent.getElementById('macro-container');
+  macroContainer.innerHTML = renderMacros(generateMacrosFromIngredients(r.ingredients), 1 / meta.servings);
 
-      <div class="detail-section">
-        <h3>Method</h3>
-        ${formatInstructions(r.instructions)}
-      </div>
+  const favBtn = detailContent.getElementById('fav-btn');
+  favBtn.dataset.recipeId = recipeId;
+  favBtn.textContent = isFav ? 'Saved' : 'Save recipe';
+  if (isFav) favBtn.classList.add('saved');
 
-      <div class="detail-section">
-        <h3>Nutrition per Serving</h3>
-        <div id="macro-container">
-          ${renderMacros(generateMacrosFromIngredients(r.ingredients), 1 / meta.servings)}
-        </div>
-      </div>
-
-      <div class="detail-toolbar">
-        <button type="button" class="btn-save${isFav ? ' saved' : ''}" id="fav-btn" data-recipe-id="${escapeHtml(recipeId)}">
-          ${isFav ? 'Saved' : 'Save recipe'}
-        </button>
-        <button type="button" class="btn-save${inCart ? ' saved' : ''}" id="cart-add-btn" data-recipe-id="${escapeHtml(recipeId)}">
-          ${inCart ? 'In List' : 'Add to List'}
-        </button>
-        <button type="button" class="btn-cooking-mode btn-save" id="cooking-mode-btn">Cooking Mode</button>
-        <button type="button" class="btn-print-detail" id="print-btn">Print</button>
-      </div>
-    </div>
-  `;
+  const cartBtn = detailContent.getElementById('cart-add-btn');
+  cartBtn.dataset.recipeId = recipeId;
+  cartBtn.textContent = inCart ? 'In List' : 'Add to List';
+  if (inCart) cartBtn.classList.add('saved');
+  
+  details.appendChild(detailContent);
 
   if (overlay.classList.contains('hidden')) {
     rememberFocus();
@@ -446,30 +454,28 @@ export async function renderFavoritesGrid() {
   empty.style.display = 'none';
 
   const frag = document.createDocumentFragment();
-  const api = await import('./api.js');
-
+  const api = await import('./api.js');    
   const missingIds = favs.filter(id => !store.state.recipes[id]);
   if (missingIds.length > 0) {
-    grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem; grid-column:1/-1;">Loading details...</div>';
+    grid.textContent = 'Loading details...';
+    grid.style.cssText = 'text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem; grid-column:1/-1;';
     await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
   }
 
+  const tmpl = document.getElementById('fav-item-template');
   for (const id of favs) {
     let r = store.state.recipes[id];
-    if (!r) continue;
+    if (!r || !tmpl) continue;
 
-    const item = document.createElement('div');
-    item.className = 'fav-item';
-    item.tabIndex = 0;
-    item.setAttribute('role', 'button');
-    item.setAttribute('aria-label', `Open saved recipe: ${escapeHtml(r.title)}`);
-    item.innerHTML = `
-      <span class="fav-cat" style="color:${catColor(r.category)}">
-        <span class="cat-dot" style="background:${catColor(r.category)}"></span>
-        ${escapeHtml(r.category)}
-      </span>
-      <h4>${escapeHtml(r.title)}</h4>
-    `;
+    const favContent = tmpl.content.cloneNode(true);
+    const item = favContent.querySelector('.fav-item');
+    item.setAttribute('aria-label', `Open saved recipe: ${r.title}`);
+    
+    const catSpan = item.querySelector('.fav-cat');
+    catSpan.style.color = catColor(r.category);
+    item.querySelector('.cat-dot').style.background = catColor(r.category);
+    item.querySelector('.cat-name').textContent = r.category;
+    item.querySelector('.fav-title').textContent = r.title;
     
     item.addEventListener('click', () => { 
       document.getElementById('fav-sheet').classList.add('hidden');
@@ -487,10 +493,12 @@ export async function renderFavoritesGrid() {
         navigateToRecipe(id);
       }
     });
-    frag.appendChild(item);
+    
+    frag.appendChild(favContent);
   }
   
-  grid.innerHTML = ''; // clear in case it changed during await
+  grid.style.cssText = '';
+  grid.textContent = ''; // clear in case it changed during await
   grid.appendChild(frag);
 }
 
@@ -516,35 +524,36 @@ export async function renderCartItems() {
   actions.style.display = 'block';
 
   const frag = document.createDocumentFragment();
-  const api = await import('./api.js');
-
-  const missingIds = cart.filter(id => !store.state.recipes[id]);
-  if (missingIds.length > 0) {
-    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem;">Loading details...</div>';
-    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
-  }
-
-  for (const id of cart) {
-    let r = store.state.recipes[id];
-    if (!r) continue;
-
-    const group = document.createElement('div');
-    group.className = 'cart-recipe-group';
-    group.innerHTML = `<h3 class="cart-recipe-title">${escapeHtml(r.title)}</h3>`;
-    
-    r.ingredients.forEach(ing => {
-      group.innerHTML += `
-        <label class="cart-ingredient">
-          <input type="checkbox">
-          <span>${escapeHtml(ing)}</span>
-        </label>
-      `;
-    });
-    frag.appendChild(group);
-  }
+  const api = await import('./api.js');    const missingIds = cart.filter(id => !store.state.recipes[id]);
+    if (missingIds.length > 0) {
+      container.textContent = 'Loading details...';
+      container.style.cssText = 'text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem;';
+      await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+    }
   
-  container.innerHTML = ''; // clear in case it changed during await
-  container.appendChild(frag);
+    const groupTmpl = document.getElementById('cart-group-template');
+    const itemTmpl = document.getElementById('cart-ingredient-template');
+
+    for (const id of cart) {
+      let r = store.state.recipes[id];
+      if (!r || !groupTmpl || !itemTmpl) continue;
+  
+      const groupContent = groupTmpl.content.cloneNode(true);
+      const group = groupContent.querySelector('.cart-recipe-group');
+      group.querySelector('.cart-recipe-title').textContent = r.title;
+      const ingList = group.querySelector('.cart-ingredients-list');
+      
+      r.ingredients.forEach(ing => {
+        const itemContent = itemTmpl.content.cloneNode(true);
+        itemContent.querySelector('.ing-text').textContent = ing;
+        ingList.appendChild(itemContent);
+      });
+      frag.appendChild(groupContent);
+    }
+    
+    container.style.cssText = '';
+    container.textContent = ''; // clear in case it changed during await
+    container.appendChild(frag);
 
   
   const clearBtn = document.getElementById('cart-clear');
@@ -675,35 +684,42 @@ export function renderTimers() {
   if (!container) return;
   
   if (activeTimers.length === 0) {
-    container.innerHTML = '';
+    container.textContent = '';
     return;
   }
   
+  container.textContent = '';
   const now = Date.now();
-  container.innerHTML = activeTimers.map(t => {
+  const tmpl = document.getElementById('active-timer-template');
+  
+  activeTimers.forEach(t => {
+    if (!tmpl) return;
+    const tContent = tmpl.content.cloneNode(true);
+    const tDiv = tContent.querySelector('.active-timer');
+    
+    const textSpan = tContent.querySelector('.timer-text');
+    const closeBtn = tContent.querySelector('.timer-close');
+    const bg = tContent.querySelector('.timer-ring-bg');
+    const fg = tContent.querySelector('.timer-ring-fg');
+    
+    closeBtn.dataset.id = t.id;
+    
     if (t.done) {
-      return `
-        <div class="active-timer active-timer--done">
-          <span class="timer-text">Timer Done!</span>
-          <button type="button" class="timer-close" data-id="${t.id}">&times;</button>
-        </div>
-      `;
+      tDiv.classList.add('active-timer--done');
+      textSpan.textContent = 'Timer Done!';
+      if (bg) bg.style.display = 'none';
+      if (fg) fg.style.display = 'none';
+    } else {
+      const left = Math.max(0, t.end - now);
+      const m = Math.floor(left / 60000);
+      const s = Math.floor((left % 60000) / 1000);
+      const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
+      const pct = ((t.total - left) / t.total) * 100;
+      
+      textSpan.textContent = timeStr;
+      if (fg) fg.style.width = `${pct}%`;
     }
     
-    const left = Math.max(0, t.end - now);
-    const m = Math.floor(left / 60000);
-    const s = Math.floor((left % 60000) / 1000);
-    const timeStr = `${m}:${s.toString().padStart(2, '0')}`;
-    const pct = ((t.total - left) / t.total) * 100;
-    
-    return `
-      <div class="active-timer">
-        <div class="timer-ring-bg">
-           <div class="timer-ring-fg" style="width: ${pct}%"></div>
-        </div>
-        <span class="timer-text">${timeStr}</span>
-        <button type="button" class="timer-close" data-id="${t.id}">&times;</button>
-      </div>
-    `;
-  }).join('');
+    container.appendChild(tContent);
+  });
 }
