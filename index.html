@@ -160,26 +160,26 @@
     </div>
   </div>
 
-  <!-- 🥬 WHAT'S IN MY FRIDGE MODAL (Centered) 🥬 -->
+  <!-- 🥬 WHAT'S IN MY FRIDGE MODAL (Ultra Premium) 🥬 -->
   <div id="fridge-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="fridge-sheet-title">
-    <div class="modal-backdrop"></div>
-    <div class="modal-box" tabindex="-1" style="max-width: 600px; margin: 8vh auto; border-left: none; border-radius: 16px; height: auto; max-height: 85vh; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
-      <div class="modal-head" style="padding: 24px 32px 16px;">
-        <h2 id="fridge-sheet-title" style="font-family: var(--f-display); font-size: 2.5rem; color: var(--ink); font-weight: 400; margin: 0;">What's in my Fridge?</h2>
-        <button id="fridge-sheet-close" type="button" class="modal-x" aria-label="Close" style="top: 28px; right: 28px;">&times;</button>
+    <div class="modal-backdrop" style="backdrop-filter: blur(8px);"></div>
+    <div class="modal-box" tabindex="-1" style="max-width: 640px; margin: 10vh auto; border-left: none; border-radius: 24px; height: auto; max-height: 80vh; box-shadow: var(--sh-xl); background: var(--surface); overflow: hidden; display: flex; flex-direction: column;">
+      <div class="modal-head" style="padding: 40px 40px 20px; border-bottom: none;">
+        <h2 id="fridge-sheet-title" style="font-family: var(--f-display); font-size: 3rem; color: var(--ink); font-weight: 400; margin: 0; line-height: 1.1;">What's in my <i style="color: var(--accent);">Fridge?</i></h2>
+        <button id="fridge-sheet-close" type="button" class="modal-x" aria-label="Close" style="top: 32px; right: 32px; background: var(--surface-dim); border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border: none;">&times;</button>
       </div>
-      <div class="fridge-content" style="padding: 0 32px 32px;">
-        <p style="margin-bottom: 24px; color: var(--ink-2); line-height: 1.6; font-size: 1.1rem;">Type an ingredient and press <kbd style="font-family: monospace; background: var(--surface-dim); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-strong);">Enter</kbd> to add it to your pantry. We'll find recipes that use all of them.</p>
+      <div class="fridge-content" style="padding: 0 40px 40px; overflow-y: auto;">
+        <p style="margin-bottom: 32px; color: var(--ink-2); line-height: 1.6; font-size: 1.15rem;">Type an ingredient and press <kbd style="font-family: monospace; background: var(--surface-dim); padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 0.95em; color: var(--ink);">Enter</kbd>. We'll find recipes you can make right now.</p>
         
-        <div id="fridge-pill-container" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; min-height: 42px;">
+        <div id="fridge-pill-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; min-height: 48px;">
           <!-- Pills go here -->
         </div>
 
-        <form id="fridge-form" style="position: relative; margin-bottom: 32px;">
-          <input type="text" id="fridge-input" placeholder="Type an ingredient (e.g. chicken)..." autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 18px 20px; background: transparent; color: var(--ink); border: 2px solid var(--border-strong); border-radius: 12px; font-family: var(--f-body); font-size: 1.1rem; outline: none; transition: border-color 0.2s;">
+        <form id="fridge-form" style="position: relative; margin-bottom: 40px;">
+          <input type="text" id="fridge-input" placeholder="e.g. chicken breast..." autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 20px 24px; background: var(--surface-dim); color: var(--ink); border: 2px solid transparent; border-radius: 16px; font-family: var(--f-body); font-size: 1.25rem; outline: none; transition: all 0.3s ease;">
         </form>
 
-        <button id="fridge-search-btn" type="button" class="btn-save" style="display: block; width: 100%; padding: 18px; font-size: 1.1rem; font-weight: 600; margin: 0; text-align: center; border-radius: 12px; cursor: pointer;">Find Recipes</button>
+        <button id="fridge-search-btn" type="button" style="display: block; width: 100%; padding: 20px; background: var(--accent); color: #ffffff; font-size: 1.25rem; font-weight: 600; border: none; border-radius: 16px; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease; box-shadow: 0 8px 20px var(--accent-soft);">Find Recipes</button>
       </div>
     </div>
   </div>
