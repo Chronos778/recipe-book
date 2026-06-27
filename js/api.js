@@ -69,7 +69,10 @@ export async function fetchRandomFeed(signal) {
     const feed = processFullMeals(data.meals);
     store.setFeed(feed);
   } catch (err) {
-    if (err.name !== 'AbortError') console.error('Error loading random feed:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error loading random feed:', err);
+      store.setFeed([]);
+    }
   }
 }
 
@@ -88,7 +91,10 @@ export async function fetchSearch(query, signal) {
     idbSet(cacheKey, feed);
     store.setFeed(feed);
   } catch (err) {
-    if (err.name !== 'AbortError') console.error('Error searching recipes:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error searching recipes:', err);
+      store.setFeed([]);
+    }
   }
 }
 
@@ -118,7 +124,10 @@ export async function fetchByCategory(category, signal) {
     idbSet(cacheKey, feedItems);
     store.setFeed(feedItems);
   } catch (err) {
-    if (err.name !== 'AbortError') console.error('Error fetching category:', err);
+    if (err.name !== 'AbortError') {
+      console.error('Error fetching category:', err);
+      store.setFeed([]);
+    }
   }
 }
 
