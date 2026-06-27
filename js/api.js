@@ -50,7 +50,7 @@ export async function fetchCategories(signal) {
     const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php', { signal });
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
-    if (data.categories) {
+    if (data.categories && Array.isArray(data.categories)) {
       const cats = data.categories.map(c => c.strCategory).sort();
       idbSet('categories', cats);
       store.setCategories(cats);
@@ -114,7 +114,7 @@ export async function fetchByCategory(category, signal) {
     const data = await response.json();
     
     const feedItems = [];
-    if (data.meals) {
+    if (data.meals && Array.isArray(data.meals)) {
       data.meals.forEach(meal => {
         feedItems.push({
           id: meal.idMeal,
@@ -172,7 +172,7 @@ export async function fetchByIngredients(ingredientsArray, signal) {
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${formattedIng}`, { signal });
       if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
-      if (!data.meals) { intersection = []; break; }
+      if (!data.meals || !Array.isArray(data.meals)) { intersection = []; break; }
       const currentIds = data.meals.map(m => m.idMeal);
       if (intersection === null) {
         intersection = currentIds;
