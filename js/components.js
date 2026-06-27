@@ -218,10 +218,16 @@ export async function renderRecentViews() {
   if (!section || !list) return;
 
   const api = await import('./api.js');
+  
+  const missingIds = store.state.recentViews.filter(id => !store.state.recipes[id]);
+  if (missingIds.length > 0) {
+    list.innerHTML = '<span style="color:var(--ink-3); font-size:0.9rem; padding:4px 10px;">Loading...</span>';
+    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+  }
+
   let validRecents = [];
   for (const id of store.state.recentViews) {
     let r = store.state.recipes[id];
-    if (!r) r = await api.fetchRecipeById(id);
     if (r) validRecents.push(id);
   }
 
@@ -424,11 +430,14 @@ export async function renderFavoritesGrid() {
   const frag = document.createDocumentFragment();
   const api = await import('./api.js');
 
+  const missingIds = favs.filter(id => !store.state.recipes[id]);
+  if (missingIds.length > 0) {
+    grid.innerHTML = '<div style="text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem; grid-column:1/-1;">Loading details...</div>';
+    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+  }
+
   for (const id of favs) {
     let r = store.state.recipes[id];
-    if (!r) {
-      r = await api.fetchRecipeById(id);
-    }
     if (!r) continue;
 
     const item = document.createElement('div');
@@ -491,11 +500,14 @@ export async function renderCartItems() {
   const frag = document.createDocumentFragment();
   const api = await import('./api.js');
 
+  const missingIds = cart.filter(id => !store.state.recipes[id]);
+  if (missingIds.length > 0) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem;">Loading details...</div>';
+    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+  }
+
   for (const id of cart) {
     let r = store.state.recipes[id];
-    if (!r) {
-      r = await api.fetchRecipeById(id);
-    }
     if (!r) continue;
 
     const group = document.createElement('div');
