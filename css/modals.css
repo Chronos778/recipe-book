@@ -865,31 +865,33 @@
 .ingredient-pill {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  background: var(--accent-soft);
-  color: var(--accent-text);
+  gap: 12px;
+  background: transparent;
+  color: var(--ink);
   padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  border: 1px solid rgba(224, 113, 62, 0.2);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border-radius: 0;
+  font-family: var(--f-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid var(--ink);
+  animation: fadeIn 0.3s ease;
 }
 .ingredient-pill button {
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--ink-3);
   cursor: pointer;
   padding: 0;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   line-height: 1;
-  transition: transform 0.2s;
+  transition: color 0.2s;
 }
 .ingredient-pill button:hover {
-  transform: scale(1.2);
-  color: var(--accent-hover);
+  color: var(--accent);
 }
-@keyframes popIn {
-  0% { transform: scale(0.8) translateY(10px); opacity: 0; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
+@keyframes fadeIn {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
 }
