@@ -212,20 +212,27 @@ function renderCategoryTabs() {
 // -----------------------------------------------------------------------------
 // RECENT VIEWS
 // -----------------------------------------------------------------------------
-function renderRecentViews() {
+export async function renderRecentViews() {
   const section = document.getElementById('recently-viewed');
   const list = document.getElementById('recently-viewed-list');
   if (!section || !list) return;
 
-  const recents = store.state.recentViews.filter(id => store.state.recipes[id]);
+  const api = await import('./api.js');
+  let validRecents = [];
+  for (const id of store.state.recentViews) {
+    let r = store.state.recipes[id];
+    if (!r) r = await api.fetchRecipeById(id);
+    if (r) validRecents.push(id);
+  }
+
   list.innerHTML = '';
 
-  if (!recents.length) {
+  if (!validRecents.length) {
     section.classList.add('hidden');
     return;
   }
 
-  recents.forEach((id) => {
+  validRecents.forEach((id) => {
     const recipe = store.state.recipes[id];
     const button = document.createElement('button');
     button.type = 'button';
@@ -400,7 +407,7 @@ function updateServings(multiplier, recipe) {
 // -----------------------------------------------------------------------------
 // FAVORITES GRID
 // -----------------------------------------------------------------------------
-export function renderFavoritesGrid() {
+export async function renderFavoritesGrid() {
   const grid = document.getElementById('favorites-grid');
   const empty = document.getElementById('no-favorites');
   const favs = store.state.favorites;
@@ -409,16 +416,20 @@ export function renderFavoritesGrid() {
   grid.innerHTML = '';
 
   if (favs.length === 0) { 
-    empty.style.display = ''; 
+    empty.style.display = 'block'; 
     return; 
   }
   empty.style.display = 'none';
 
   const frag = document.createDocumentFragment();
+  const api = await import('./api.js');
 
-  favs.forEach(id => {
-    const r = store.state.recipes[id];
-    if (!r) return;
+  for (const id of favs) {
+    let r = store.state.recipes[id];
+    if (!r) {
+      r = await api.fetchRecipeById(id);
+    }
+    if (!r) continue;
 
     const item = document.createElement('div');
     item.className = 'fav-item';
@@ -450,15 +461,16 @@ export function renderFavoritesGrid() {
       }
     });
     frag.appendChild(item);
-  });
+  }
   
+  grid.innerHTML = ''; // clear in case it changed during await
   grid.appendChild(frag);
 }
 
 // -----------------------------------------------------------------------------
 // CART
 // -----------------------------------------------------------------------------
-export function renderCartItems() {
+export async function renderCartItems() {
   const container = document.getElementById('cart-items');
   const empty = document.getElementById('no-cart');
   const actions = document.getElementById('cart-actions');
@@ -477,10 +489,14 @@ export function renderCartItems() {
   actions.style.display = 'block';
 
   const frag = document.createDocumentFragment();
+  const api = await import('./api.js');
 
-  cart.forEach(id => {
-    const r = store.state.recipes[id];
-    if (!r) return;
+  for (const id of cart) {
+    let r = store.state.recipes[id];
+    if (!r) {
+      r = await api.fetchRecipeById(id);
+    }
+    if (!r) continue;
 
     const group = document.createElement('div');
     group.className = 'cart-recipe-group';
@@ -495,9 +511,11 @@ export function renderCartItems() {
       `;
     });
     frag.appendChild(group);
-  });
+  }
   
+  container.innerHTML = ''; // clear in case it changed during await
   container.appendChild(frag);
+
   
   const clearBtn = document.getElementById('cart-clear');
   if (clearBtn) {
