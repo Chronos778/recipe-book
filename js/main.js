@@ -25,7 +25,12 @@ async function initializeApp() {
   
   fetchCategories();
   renderSkeletonCards();
-  fetchRandomFeed();
+  
+  if (store.state.activeCategory && store.state.activeCategory !== 'all') {
+    fetchByCategory(store.state.activeCategory);
+  } else {
+    fetchRandomFeed();
+  }
 
   initDarkMode();
   setupSearch();
