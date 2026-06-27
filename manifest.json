@@ -3,8 +3,8 @@
     "short_name": "Cook book",
     "start_url": "./index.html",
     "display": "standalone",
-    "background_color": "#ff6347",
-    "theme_color": "#ff6347",
+    "background_color": "#FDFBF7",
+    "theme_color": "#C44C27",
     "icons": [
         {
             "src": "images/icon-192.png",
