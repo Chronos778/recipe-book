@@ -13,10 +13,12 @@
   --bg: #FDFBF7;
   --surface: #FFFFFF;
   --surface-dim: #F5F2EC;
+  --surface-3: #EAE6DF;
   --border: #E6E1D8;
   --border-strong: #D4CFC5;
 
   --ink: #1A1815;
+  --ink-1: #38352F;
   --ink-2: #6E665C;
   --ink-3: #A19A90;
   --ink-4: #C5BFB5;
@@ -64,10 +66,12 @@ body.dark {
   --bg: #131210;
   --surface: #1C1A17;
   --surface-dim: #21201D;
+  --surface-3: #2A2824;
   --border: #2C2A26;
   --border-strong: #393630;
 
   --ink: #EDE8DF;
+  --ink-1: #D4CDBC;
   --ink-2: #968F84;
   --ink-3: #615B52;
   --ink-4: #3C3832;

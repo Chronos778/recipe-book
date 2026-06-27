@@ -8,8 +8,10 @@ function initDB() {
   if (!dbPromise) {
     dbPromise = new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
-      
-      request.onerror = (e) => reject(e.target.error);
+      request.onerror = (e) => {
+        dbPromise = null;
+        reject(e.target.error);
+      };
       
       request.onsuccess = (e) => resolve(e.target.result);
       

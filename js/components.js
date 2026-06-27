@@ -5,11 +5,17 @@ import {
   triggerExplosion, BOOKMARK_IN, BOOKMARK_OUT, parseIngredient, formatAmount,
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, playDing,
   escapeHtml, generateMacrosFromIngredients, renderMacros, parseInstructionSteps,
-  formatSingleInstruction
+  formatSingleInstruction, initDonuts
 } from './utils.js';
 
 let activeMultiplier = 1;
-export let activeTimers = JSON.parse(localStorage.getItem('activeTimers') || '[]');
+export let activeTimers = [];
+try {
+  activeTimers = JSON.parse(localStorage.getItem('activeTimers') || '[]');
+} catch (e) {
+  activeTimers = [];
+  console.warn('Failed to parse active timers', e);
+}
 let windowTimerInterval = null;
 
 export function initTimers() {
@@ -336,7 +342,7 @@ export function viewRecipe(recipeId) {
   detailContent.querySelector('.cat-dot').style.background = color;
   detailContent.querySelector('.cat-name').textContent = r.category;
   
-  detailContent.getElementById('recipe-detail-title').textContent = r.title;
+  detailContent.querySelector('#recipe-detail-title').textContent = r.title;
   
   detailContent.querySelector('.meta-servings').textContent = `Serves ${meta.servings}`;
   detailContent.querySelector('.meta-time').textContent = meta.totalTime;
@@ -344,7 +350,7 @@ export function viewRecipe(recipeId) {
   
   detailContent.querySelector('.serve-count').textContent = `${meta.servings} servings`;
   
-  const ingList = detailContent.getElementById('ing-list');
+  const ingList = detailContent.querySelector('#ing-list');
   const ingItemTmpl = document.getElementById('cart-ingredient-template');
   r.ingredients.forEach(i => {
     const li = document.createElement('li');
@@ -359,18 +365,19 @@ export function viewRecipe(recipeId) {
     ingList.appendChild(li);
   });
   
-  const methodContainer = detailContent.getElementById('method-container');
+  const methodContainer = detailContent.querySelector('#method-container');
   methodContainer.innerHTML = formatInstructions(r.instructions);
 
-  const macroContainer = detailContent.getElementById('macro-container');
+  const macroContainer = detailContent.querySelector('#macro-container');
   macroContainer.innerHTML = renderMacros(generateMacrosFromIngredients(r.ingredients), 1 / meta.servings);
+  initDonuts(macroContainer);
 
-  const favBtn = detailContent.getElementById('fav-btn');
+  const favBtn = detailContent.querySelector('#fav-btn');
   favBtn.dataset.recipeId = recipeId;
   favBtn.textContent = isFav ? 'Saved' : 'Save recipe';
   if (isFav) favBtn.classList.add('saved');
 
-  const cartBtn = detailContent.getElementById('cart-add-btn');
+  const cartBtn = detailContent.querySelector('#cart-add-btn');
   cartBtn.dataset.recipeId = recipeId;
   cartBtn.textContent = inCart ? 'In List' : 'Add to List';
   if (inCart) cartBtn.classList.add('saved');
@@ -765,12 +772,33 @@ async function exportRecipeCard(r) {
   const clone = template.content.cloneNode(true);
   const card = clone.querySelector('.export-card');
   
-  card.querySelector('.export-hero').src = r.image;
+  const heroImg = card.querySelector('.export-hero');
+  try {
+    const res = await fetch(r.image);
+    const blob = await res.blob();
+    const dataUrl = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.readAsDataURL(blob);
+    });
+    heroImg.src = dataUrl;
+  } catch(e) {
+    heroImg.src = r.image;
+  }
+  
+  await new Promise(resolve => {
+    if (heroImg.complete) resolve();
+    else {
+      heroImg.onload = resolve;
+      heroImg.onerror = resolve;
+    }
+  });
   card.querySelector('.export-cat').textContent = r.category || 'Recipe';
   card.querySelector('.export-title').textContent = r.title;
-  
-  const macros = r.ingredients ? renderMacros(generateMacrosFromIngredients(r.ingredients), 1) : '';
+  const meta = getRecipeMeta(r);
+  const macros = r.ingredients ? renderMacros(generateMacrosFromIngredients(r.ingredients), 1 / meta.servings) : '';
   card.querySelector('.export-macros').innerHTML = macros;
+  initDonuts(card.querySelector('.export-macros'));
   
   let ings = '';
   if (r.ingredients) {

@@ -556,7 +556,7 @@
   justify-content: center;
   font-weight: 600;
   font-size: 0.8rem;
-  font-family: 'Outfit', sans-serif;
+  font-family: var(--f-body);
 }
 
 .detail-nutrition {
@@ -782,7 +782,7 @@
   gap: 30px;
   background: var(--surface);
   padding: 24px;
-  border-radius: var(--rad-md);
+  border-radius: var(--r-lg);
   box-shadow: 0 4px 12px rgba(0,0,0,0.03);
   margin-top: 15px;
   border: 1px solid var(--border);
@@ -790,8 +790,8 @@
 
 .macro-chart {
   position: relative;
-  width: 120px;
-  height: 120px;
+  width: 140px;
+  height: 140px;
   flex-shrink: 0;
 }
 
@@ -804,7 +804,7 @@
 
 .macro-center {
   position: absolute;
-  inset: 15px;
+  inset: 6px;
   background: var(--surface);
   border-radius: 50%;
   display: flex;
@@ -857,7 +857,7 @@
 
 .macro-val {
   color: var(--ink);
-  font-family: var(--f-base);
+  font-family: var(--f-body);
   font-weight: 600;
   margin-left: 10px;
 }

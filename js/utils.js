@@ -40,14 +40,7 @@ export function inferDifficulty(recipe) {
 }
 
 export function inferServings(recipe) {
-  if (Array.isArray(recipe.ingredients) && recipe.ingredients.length > 0) {
-    const macros = generateMacrosFromIngredients(recipe.ingredients);
-    let s = Math.round(macros.calories / 450); // average meal/dessert portion
-    if (s < 1) s = 1;
-    if (s > 24) s = 24;
-    return s;
-  }
-  return 2;
+  return 4;
 }
 
 export function getRecipeMeta(recipe) {
@@ -293,37 +286,75 @@ export function renderMacros(macros, multiplier) {
 
   const pctPro = (calPro / total) * 100;
   const pctFat = (calFat / total) * 100;
-
-  const grad = `conic-gradient(var(--cat-lunch) 0% ${pctPro}%, var(--cat-breakfast) ${pctPro}% ${pctPro + pctFat}%, var(--cat-dinner) ${pctPro + pctFat}% 100%)`;
+  const pctCar = (calCar / total) * 100;
 
   return `
     <div class="macro-display">
       <div class="macro-chart">
-        <div class="macro-donut" style="background: ${grad}"></div>
-        <div class="macro-center">
+        <canvas class="donut-canvas" data-pro="${pctPro}" data-fat="${pctFat}" data-car="${pctCar}" style="width: 140px; height: 140px; position: absolute; top: 0; left: 0; right: 0; bottom: 0; z-index: 0;"></canvas>
+        <div class="macro-center" style="z-index: 1; pointer-events: none; position: absolute; top: 6px; left: 6px; right: 6px; bottom: 6px; background: var(--surface); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;">
           <span class="macro-cals">${cal}</span>
           <span class="macro-cals-lbl">kcal</span>
         </div>
       </div>
       <div class="macro-legend">
         <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-lunch)"></span>
+          <span class="macro-dot" style="background: #5CB88A"></span>
           <span class="macro-lbl">Protein</span>
           <strong class="macro-val">${pro}g</strong>
         </div>
         <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-breakfast)"></span>
+          <span class="macro-dot" style="background: #DCA050"></span>
           <span class="macro-lbl">Fat</span>
           <strong class="macro-val">${fat}g</strong>
         </div>
         <div class="macro-item">
-          <span class="macro-dot" style="background: var(--cat-dinner)"></span>
+          <span class="macro-dot" style="background: #A07FE0"></span>
           <span class="macro-lbl">Carbs</span>
           <strong class="macro-val">${car}g</strong>
         </div>
       </div>
     </div>
   `;
+}
+
+export function initDonuts(container) {
+  const canvases = container.querySelectorAll('.donut-canvas');
+  canvases.forEach(canvas => {
+    const ctx = canvas.getContext('2d');
+    const pro = parseFloat(canvas.dataset.pro) || 0;
+    const fat = parseFloat(canvas.dataset.fat) || 0;
+    const car = parseFloat(canvas.dataset.car) || 0;
+    
+    const size = 140;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    ctx.scale(dpr, dpr);
+    
+    const cx = size / 2;
+    const cy = size / 2;
+    const r = (size / 2) - 6;
+    
+    ctx.lineWidth = 12;
+    ctx.lineCap = 'butt';
+    
+    let startAngle = -Math.PI / 2;
+    
+    const drawSegment = (pct, color) => {
+      if (pct <= 0) return;
+      const angle = (pct / 100) * Math.PI * 2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, startAngle, startAngle + angle);
+      ctx.strokeStyle = color;
+      ctx.stroke();
+      startAngle += angle;
+    };
+    
+    drawSegment(pro, '#5CB88A');
+    drawSegment(fat, '#DCA050');
+    drawSegment(car, '#A07FE0');
+  });
 }
 
 export function triggerExplosion(x, y) {

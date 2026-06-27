@@ -48,6 +48,7 @@ export async function fetchCategories(signal) {
   }
   try {
     const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php', { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     if (data.categories) {
       const cats = data.categories.map(c => c.strCategory).sort();
@@ -64,6 +65,7 @@ export async function fetchRandomFeed(signal) {
     const letters = 'bcdefghiklmnoprstvw';
     const randomLetter = letters[Math.floor(Math.random() * letters.length)];
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${randomLetter}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
@@ -85,6 +87,7 @@ export async function fetchSearch(query, signal) {
   }
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
@@ -107,6 +110,7 @@ export async function fetchByCategory(category, signal) {
   }
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     
     const feedItems = [];
@@ -144,6 +148,7 @@ export async function fetchRecipeById(id, signal) {
 
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`, { signal });
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     processFullMeals(data.meals);
     
@@ -165,6 +170,7 @@ export async function fetchByIngredients(ingredientsArray, signal) {
     for (const ing of ingredientsArray) {
       const formattedIng = ing.toLowerCase().replace(/\s+/g, '_');
       const res = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?i=${formattedIng}`, { signal });
+      if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
       const data = await res.json();
       if (!data.meals) { intersection = []; break; }
       const currentIds = data.meals.map(m => m.idMeal);
@@ -183,7 +189,7 @@ export async function fetchByIngredients(ingredientsArray, signal) {
     const feedItems = await Promise.all(intersection.map(async id => {
       const r = await fetchRecipeById(id, signal);
       if (!r) return null;
-      return { id: r.id, title: r.title, image: r.image, category: r.category };
+      return { id, title: r.title, image: r.image, category: r.category };
     }));
     store.setFeed(feedItems.filter(Boolean));
   } catch (err) {

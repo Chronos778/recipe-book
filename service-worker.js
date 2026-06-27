@@ -1,4 +1,4 @@
-const CACHE_NAME = 'recipe-book-cache-v31';
+const CACHE_NAME = 'recipe-book-cache-v32';
 const urlsToCache = [
     './',
     './index.html',
@@ -17,6 +17,8 @@ const urlsToCache = [
     './js/idb.js',
     './js/html2canvas.min.js',
     './manifest.json',
+    './images/icon-192.png',
+    './images/icon-512.png',
 ];
 
 self.addEventListener('install', (event) => {
@@ -55,7 +57,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
             const fetchPromise = fetch(request).then((networkResponse) => {
-                if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                if (networkResponse && networkResponse.status === 200 && (networkResponse.type === 'basic' || networkResponse.type === 'cors')) {
                     const responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(request, responseToCache);
@@ -63,8 +65,12 @@ self.addEventListener('fetch', (event) => {
                 }
                 return networkResponse;
             }).catch(() => {
-                // If fetch fails (offline), return cached response if available, or a 503 fallback
+                // If fetch fails (offline), return cached response if available
                 if (cachedResponse) return cachedResponse;
+                // If navigation request, return index.html
+                if (request.mode === 'navigate') {
+                    return caches.match('./index.html');
+                }
                 return new Response('Offline', { status: 503, statusText: 'Service Unavailable' });
             });
 

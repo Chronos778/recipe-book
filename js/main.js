@@ -231,7 +231,7 @@ function setupSheets() {
     if (!overlay.classList.contains('hidden')) trapFocus(e, overlay.querySelector('.panel-drawer'));
     else if (!favSheet.classList.contains('hidden')) trapFocus(e, favSheet.querySelector('.modal-box'));
     else if (!cartSheet.classList.contains('hidden')) trapFocus(e, cartSheet.querySelector('.modal-box'));
-    else if (!fridgeSheet.classList.contains('hidden')) trapFocus(e, fridgeSheet.querySelector('.modal-box'));
+    else if (!fridgeSheet.classList.contains('hidden')) trapFocus(e, fridgeSheet.querySelector('.fridge-panel'));
     else if (!contactSheet.classList.contains('hidden')) trapFocus(e, contactSheet.querySelector('.modal-box'));
     else {
       const mobileMenu = document.getElementById('mobile-menu');
@@ -481,5 +481,11 @@ function setupKeyboardShortcuts() {
         closeContactSheet();
       }
     }
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js').catch(err => {
+    console.error('Service Worker registration failed:', err);
   });
 }
