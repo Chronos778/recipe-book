@@ -1,4 +1,5 @@
 import { store } from './store.js';
+import { idbGet, idbSet } from './idb.js';
 
 // Helper to parse full meal details and return a lightweight feed item
 function processFullMeals(meals) {
@@ -39,11 +40,10 @@ function processFullMeals(meals) {
   return feedItems;
 }
 
-const apiCache = new Map();
-
 export async function fetchCategories(signal) {
-  if (apiCache.has('categories')) {
-    store.setCategories(apiCache.get('categories'));
+  const cached = await idbGet('categories');
+  if (cached) {
+    store.setCategories(cached);
     return;
   }
   try {
@@ -51,7 +51,7 @@ export async function fetchCategories(signal) {
     const data = await response.json();
     if (data.categories) {
       const cats = data.categories.map(c => c.strCategory).sort();
-      apiCache.set('categories', cats);
+      idbSet('categories', cats);
       store.setCategories(cats);
     }
   } catch (err) {
@@ -75,8 +75,9 @@ export async function fetchRandomFeed(signal) {
 
 export async function fetchSearch(query, signal) {
   const cacheKey = `search_${query}`;
-  if (apiCache.has(cacheKey)) {
-    store.setFeed(apiCache.get(cacheKey));
+  const cached = await idbGet(cacheKey);
+  if (cached) {
+    store.setFeed(cached);
     return;
   }
   try {
@@ -84,7 +85,7 @@ export async function fetchSearch(query, signal) {
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
-    apiCache.set(cacheKey, feed);
+    idbSet(cacheKey, feed);
     store.setFeed(feed);
   } catch (err) {
     if (err.name !== 'AbortError') console.error('Error searching recipes:', err);
@@ -93,8 +94,9 @@ export async function fetchSearch(query, signal) {
 
 export async function fetchByCategory(category, signal) {
   const cacheKey = `cat_${category}`;
-  if (apiCache.has(cacheKey)) {
-    store.setFeed(apiCache.get(cacheKey));
+  const cached = await idbGet(cacheKey);
+  if (cached) {
+    store.setFeed(cached);
     return;
   }
   try {
@@ -113,7 +115,7 @@ export async function fetchByCategory(category, signal) {
       });
     }
     
-    apiCache.set(cacheKey, feedItems);
+    idbSet(cacheKey, feedItems);
     store.setFeed(feedItems);
   } catch (err) {
     if (err.name !== 'AbortError') console.error('Error fetching category:', err);
@@ -121,13 +123,26 @@ export async function fetchByCategory(category, signal) {
 }
 
 export async function fetchRecipeById(id, signal) {
-  // If we already have the full details cached, skip fetch
+  // If we already have the full details cached in memory, skip fetch
   if (store.state.recipes[id]) return store.state.recipes[id];
   
+  // Try IDB cache
+  const cachedRecipe = await idbGet(`recipe_${id}`);
+  if (cachedRecipe) {
+    store.setRecipes({ ...store.state.recipes, [id]: cachedRecipe });
+    return cachedRecipe;
+  }
+
   try {
     const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`, { signal });
     const data = await response.json();
     processFullMeals(data.meals);
+    
+    // Save the fully processed recipe to IDB
+    if (store.state.recipes[id]) {
+      idbSet(`recipe_${id}`, store.state.recipes[id]);
+    }
+    
     return store.state.recipes[id];
   } catch (err) {
     if (err.name !== 'AbortError') console.error('Error fetching recipe details:', err);

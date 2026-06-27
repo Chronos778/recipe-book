@@ -9,6 +9,7 @@ const urlsToCache = [
     './js/utils.js',
     './js/router.js',
     './js/components.js',
+    './js/idb.js',
     './manifest.json',
 ];
 
