@@ -2,7 +2,12 @@ const CACHE_NAME = 'recipe-book-cache-v27';
 const urlsToCache = [
     './',
     './index.html',
-    './css/styles.css',
+    './css/variables.css',
+    './css/base.css',
+    './css/layout.css',
+    './css/components.css',
+    './css/modals.css',
+    './css/responsive.css',
     './js/main.js',
     './js/store.js',
     './js/api.js',

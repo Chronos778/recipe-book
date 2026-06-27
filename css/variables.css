@@ -1,0 +1,96 @@
+/* ═══════════════════════════════════════════════════════════════
+   COOKED'S — Editorial Kitchen
+   Typography : Instrument Serif (display) + Plus Jakarta Sans (body)
+   Palette    : Warm cream, burnt sienna accent, forest green secondary
+   Direction  : High-end food magazine — Kinfolk/Bon Appétit inspired
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --f-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --f-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Palette — light (default) */
+  --bg: #FDFBF7;
+  --surface: #FFFFFF;
+  --surface-dim: #F5F2EC;
+  --border: #E6E1D8;
+  --border-strong: #D4CFC5;
+
+  --ink: #1A1815;
+  --ink-2: #6E665C;
+  --ink-3: #A19A90;
+  --ink-4: #C5BFB5;
+
+  --accent: #C0522C;
+  --accent-hover: #A84420;
+  --accent-soft: rgba(192, 82, 44, 0.06);
+  --accent-text: #B34A26;
+
+  --green: #3D7A5F;
+  --green-soft: rgba(61, 122, 95, 0.06);
+
+  --cat-breakfast: #C08530;
+  --cat-lunch: #3D7A5F;
+  --cat-dinner: #7C5BCC;
+  --cat-dessert: #B84E6F;
+
+  /* Layout */
+  --nav-h: 64px;
+  --page-px: clamp(20px, 5vw, 72px);
+  --max-w: 920px;
+  --panel-w: 500px;
+
+  --r-sm: 4px;
+  --r: 8px;
+  --r-lg: 12px;
+
+  --sh-xs: 0 1px 2px rgba(26, 24, 21, 0.04);
+  --sh-sm: 0 1px 4px rgba(26, 24, 21, 0.05), 0 4px 12px rgba(26, 24, 21, 0.03);
+  --sh-md: 0 4px 16px rgba(26, 24, 21, 0.06), 0 1px 3px rgba(26, 24, 21, 0.04);
+  --sh-lg: 0 12px 40px rgba(26, 24, 21, 0.1);
+  --sh-xl: 0 20px 60px rgba(26, 24, 21, 0.14);
+
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur: 0.18s;
+  --dur-md: 0.3s;
+  --dur-lg: 0.5s;
+
+  --overlay-bg: rgba(26, 24, 21, 0.32);
+}
+
+/* ─── DARK MODE ─── */
+body.dark {
+  --bg: #131210;
+  --surface: #1C1A17;
+  --surface-dim: #21201D;
+  --border: #2C2A26;
+  --border-strong: #393630;
+
+  --ink: #EDE8DF;
+  --ink-2: #968F84;
+  --ink-3: #615B52;
+  --ink-4: #3C3832;
+
+  --accent: #E0713E;
+  --accent-hover: #F0844E;
+  --accent-soft: rgba(224, 113, 62, 0.08);
+  --accent-text: #E87A48;
+
+  --green: #5CB88A;
+  --green-soft: rgba(92, 184, 138, 0.08);
+
+  --cat-breakfast: #DCA050;
+  --cat-lunch: #5CB88A;
+  --cat-dinner: #A07FE0;
+  --cat-dessert: #E07098;
+
+  --sh-xs: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --sh-sm: 0 1px 4px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.15);
+  --sh-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+  --sh-lg: 0 12px 40px rgba(0, 0, 0, 0.35);
+  --sh-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+  --overlay-bg: rgba(0, 0, 0, 0.55);
+}
+
