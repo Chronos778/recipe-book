@@ -4,7 +4,7 @@ import { setupRouter, navigateHome } from './router.js';
 import { 
   setupReactivity, renderFavoritesGrid, renderCartItems,
   closeOverlay, closeCookingMode, prevCookingStep, nextCookingStep,
-  startTimer, removeTimer
+  startTimer, removeTimer, renderSkeletonCards
 } from './components.js';
 import { 
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus 
@@ -133,8 +133,7 @@ function setupSearch() {
       const query = e.target.value.trim();
       store.setSearchQuery(query);
       
-      const grid = document.getElementById('recipes');
-      if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Searching database...</div>';
+      renderSkeletonCards();
       
       if (currentAbortController) currentAbortController.abort();
       currentAbortController = new AbortController();
@@ -172,8 +171,7 @@ function setupCategoryTabs() {
     if (hiddenSelect) hiddenSelect.value = cat;
     store.setActiveCategory(cat);
     
-    const grid = document.getElementById('recipes');
-    if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Loading category...</div>';
+    renderSkeletonCards();
     
     if (currentAbortController) currentAbortController.abort();
     currentAbortController = new AbortController();

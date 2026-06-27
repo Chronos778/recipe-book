@@ -109,6 +109,24 @@ function updateCartBadge() {
 // -----------------------------------------------------------------------------
 // RECIPE CARDS & LISTINGS
 // -----------------------------------------------------------------------------
+export function renderSkeletonCards(count = 8) {
+  const grid = document.getElementById('recipes');
+  if (!grid) return;
+  grid.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < count; i++) {
+    const card = document.createElement('div');
+    card.className = 'skeleton-card';
+    card.innerHTML = `
+      <div class="skeleton skeleton-img"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-meta"></div>
+    `;
+    frag.appendChild(card);
+  }
+  grid.appendChild(frag);
+}
+
 function renderRecipeCards() {
   const grid = document.getElementById('recipes');
   if (!grid) return;
