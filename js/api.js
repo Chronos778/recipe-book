@@ -6,7 +6,7 @@ function processFullMeals(meals) {
   const newRecipes = {};
   const feedItems = [];
 
-  if (meals) {
+  if (meals && Array.isArray(meals)) {
     meals.forEach(meal => {
       const ingredients = [];
       for (let i = 1; i <= 20; i++) {
