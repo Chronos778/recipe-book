@@ -160,26 +160,25 @@
     </div>
   </div>
 
-  <!-- 🥬 WHAT'S IN MY FRIDGE (Editorial / Kinfolk Aesthetic) 🥬 -->
+  <!-- 🥬 WHAT'S IN MY FRIDGE 🥬 -->
   <div id="fridge-sheet" class="modal-wrap hidden" role="dialog" aria-modal="true" aria-labelledby="fridge-sheet-title">
-    <div class="modal-backdrop" style="background: var(--bg); opacity: 0.98;"></div>
-    <div class="modal-box" tabindex="-1" style="max-width: 800px; margin: 15vh auto; border: none; border-radius: 0; background: transparent; box-shadow: none; display: flex; flex-direction: column;">
-      <div class="modal-head" style="padding: 0; border-bottom: none; position: relative;">
-        <button id="fridge-sheet-close" type="button" class="modal-x" aria-label="Close" style="top: -60px; right: 0; background: transparent; color: var(--ink); font-size: 2.5rem; font-weight: 300;">&times;</button>
-        <h2 id="fridge-sheet-title" style="font-family: var(--f-display); font-size: 5rem; color: var(--ink); font-weight: 400; margin: 0; line-height: 1; letter-spacing: -0.02em;">The Pantry.</h2>
-        <p style="margin-top: 16px; color: var(--ink-2); font-family: var(--f-body); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.05em; text-transform: uppercase;">Tell us what you have. We'll write the menu.</p>
-      </div>
-      
-      <div class="fridge-content" style="padding: 60px 0 0;">
-        <div id="fridge-pill-container" style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 40px; min-height: 40px;">
-          <!-- Editorial tags go here -->
-        </div>
+    <div class="modal-backdrop"></div>
+    <div class="fridge-panel" tabindex="-1">
+      <button id="fridge-sheet-close" type="button" class="fridge-close" aria-label="Close">&times;</button>
+      <div class="fridge-inner">
+        <h2 id="fridge-sheet-title" class="fridge-title">What's in your kitchen?</h2>
+        <p class="fridge-subtitle">Add ingredients below &mdash; we'll find what you can cook right now.</p>
 
-        <form id="fridge-form" style="position: relative; margin-bottom: 60px;">
-          <input type="text" id="fridge-input" placeholder="Type an ingredient and press enter..." autocomplete="off" style="width: 100%; box-sizing: border-box; padding: 20px 0; background: transparent; color: var(--ink); border: none; border-bottom: 2px solid var(--ink); border-radius: 0; font-family: var(--f-display); font-size: 2.5rem; outline: none; transition: border-color 0.3s ease;">
+        <div id="fridge-pill-container" class="fridge-pills"></div>
+
+        <form id="fridge-form" class="fridge-form">
+          <input type="text" id="fridge-input" class="fridge-input" placeholder="e.g. chicken, garlic, rice..." autocomplete="off">
         </form>
 
-        <button id="fridge-search-btn" type="button" style="display: inline-block; width: auto; padding: 16px 48px; background: var(--ink); color: var(--bg); font-family: var(--f-body); font-size: 1rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; border: none; border-radius: 0; cursor: pointer; transition: background 0.3s ease;">Curate Recipes</button>
+        <button id="fridge-search-btn" type="button" class="fridge-submit">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Find Recipes
+        </button>
       </div>
     </div>
   </div>
