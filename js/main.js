@@ -24,6 +24,7 @@ async function initializeApp() {
   setupRouter(); // checks URL and sets activeRecipeId
   
   fetchCategories();
+  renderSkeletonCards();
   fetchRandomFeed();
 
   initDarkMode();
