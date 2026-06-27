@@ -23,8 +23,8 @@ async function initializeApp() {
   setupReactivity();
   setupRouter(); // checks URL and sets activeRecipeId
   
-  await fetchCategories();
-  await fetchRandomFeed();
+  fetchCategories();
+  fetchRandomFeed();
 
   initDarkMode();
   setupSearch();

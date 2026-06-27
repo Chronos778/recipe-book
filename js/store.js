@@ -28,9 +28,9 @@ class Store {
       recentViews: safeReadJSON('recentViews', []),
       activeRecipeId: null,
       searchQuery: '',
-      activeCategory: 'all',
-      categories: [],
-      feed: []
+      activeCategory: safeReadJSON('activeCategory', 'all'),
+      categories: safeReadJSON('categories', []),
+      feed: safeReadJSON('feed', [])
     };
 
     // Proxy to intercept state changes
@@ -43,6 +43,9 @@ class Store {
         if (property === 'favorites') safeWriteJSON('favorites', value);
         if (property === 'cart') safeWriteJSON('shoppingCart', value);
         if (property === 'recentViews') safeWriteJSON('recentViews', value);
+        if (property === 'activeCategory') safeWriteJSON('activeCategory', value);
+        if (property === 'categories') safeWriteJSON('categories', value);
+        if (property === 'feed') safeWriteJSON('feed', value);
         
         return true;
       }
