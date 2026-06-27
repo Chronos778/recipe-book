@@ -4,7 +4,7 @@ import { setupRouter, navigateHome } from './router.js';
 import { 
   setupReactivity, renderFavoritesGrid, renderCartItems,
   closeOverlay, closeCookingMode, prevCookingStep, nextCookingStep,
-  startTimer, removeTimer, renderSkeletonCards
+  startTimer, removeTimer, renderSkeletonCards, initTimers
 } from './components.js';
 import { 
   rememberFocus, restoreFocus, syncBodyScrollLock, focusFirstElement, trapFocus 
@@ -25,8 +25,13 @@ async function initializeApp() {
   
   fetchCategories();
   renderSkeletonCards();
+  initTimers();
   
-  if (store.state.activeCategory && store.state.activeCategory !== 'all') {
+  const searchBar = document.getElementById('search-bar');
+  if (searchBar && searchBar.value.trim() !== '') {
+    store.setSearchQuery(searchBar.value.trim());
+    fetchSearch(searchBar.value.trim());
+  } else if (store.state.activeCategory && store.state.activeCategory !== 'all') {
     fetchByCategory(store.state.activeCategory);
   } else {
     fetchRandomFeed();
@@ -139,6 +144,13 @@ function setupSearch() {
       const query = e.target.value.trim();
       store.setSearchQuery(query);
       
+      if (query !== '') {
+        // Reset category to "Discover" visually and in state
+        const hiddenSelect = document.getElementById('category-filter');
+        if (hiddenSelect) hiddenSelect.value = 'all';
+        store.setActiveCategory('all');
+      }
+
       renderSkeletonCards();
       
       if (currentAbortController) currentAbortController.abort();
@@ -177,6 +189,12 @@ function setupCategoryTabs() {
     if (hiddenSelect) hiddenSelect.value = cat;
     store.setActiveCategory(cat);
     
+    const searchBar = document.getElementById('search-bar');
+    if (searchBar && searchBar.value.trim() !== '') {
+      searchBar.value = '';
+      store.setSearchQuery('');
+    }
+
     renderSkeletonCards();
     
     if (currentAbortController) currentAbortController.abort();

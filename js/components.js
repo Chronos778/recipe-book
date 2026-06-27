@@ -9,8 +9,17 @@ import {
 } from './utils.js';
 
 let activeMultiplier = 1;
-export let activeTimers = [];
+export let activeTimers = JSON.parse(localStorage.getItem('activeTimers') || '[]');
 let windowTimerInterval = null;
+
+export function initTimers() {
+  if (activeTimers.length > 0) {
+    if (!windowTimerInterval) {
+      windowTimerInterval = setInterval(updateTimers, 1000);
+    }
+    renderTimers();
+  }
+}
 
 // Subscribe to store changes to automatically update UI
 export function setupReactivity() {
@@ -61,8 +70,13 @@ export function setupReactivity() {
   store.subscribe('activeRecipeId', async (id) => {
     if (id) {
       if (!store.state.recipes[id]) {
-        const api = await import('./api.js');
-        await api.fetchRecipeById(id);
+        try {
+          const api = await import('./api.js');
+          await api.fetchRecipeById(id);
+        } catch (err) {
+          console.error("Failed to fetch recipe details:", err);
+          return;
+        }
       }
       viewRecipe(id);
     } else {
@@ -253,7 +267,12 @@ export async function renderRecentViews() {
       list.style.color = 'var(--ink-3)';
       list.style.fontSize = '0.9rem';
       list.style.padding = '4px 10px';
-      await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+      try {
+        await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+      } catch (err) {
+        list.textContent = 'Failed to load details.';
+        return;
+      }
     }
 
   let validRecents = [];
@@ -456,11 +475,16 @@ export async function renderFavoritesGrid() {
   const frag = document.createDocumentFragment();
   const api = await import('./api.js');    
   const missingIds = favs.filter(id => !store.state.recipes[id]);
-  if (missingIds.length > 0) {
-    grid.textContent = 'Loading details...';
-    grid.style.cssText = 'text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem; grid-column:1/-1;';
-    await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
-  }
+    if (missingIds.length > 0) {
+      grid.textContent = 'Loading details...';
+      grid.style.cssText = 'text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem; grid-column:1/-1;';
+      try {
+        await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+      } catch (err) {
+        grid.textContent = 'Failed to load recipe details. Please check your connection.';
+        return;
+      }
+    }
 
   const tmpl = document.getElementById('fav-item-template');
   for (const id of favs) {
@@ -524,11 +548,17 @@ export async function renderCartItems() {
   actions.style.display = 'block';
 
   const frag = document.createDocumentFragment();
-  const api = await import('./api.js');    const missingIds = cart.filter(id => !store.state.recipes[id]);
+  const api = await import('./api.js');    
+  const missingIds = cart.filter(id => !store.state.recipes[id]);
     if (missingIds.length > 0) {
       container.textContent = 'Loading details...';
       container.style.cssText = 'text-align:center; padding:40px; color:var(--ink-3); font-size:1.1rem;';
-      await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+      try {
+        await Promise.all(missingIds.map(id => api.fetchRecipeById(id)));
+      } catch (err) {
+        container.textContent = 'Failed to load cart items. Please check your connection.';
+        return;
+      }
     }
   
     const groupTmpl = document.getElementById('cart-group-template');
@@ -648,6 +678,7 @@ export function startTimer(amount, unit) {
   
   const timer = { id: Date.now(), end: Date.now() + ms, total: ms, done: false };
   activeTimers.push(timer);
+  localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
   renderTimers();
   
   if (!windowTimerInterval) {
@@ -667,6 +698,7 @@ function updateTimers() {
   activeTimers.forEach(t => {
     if (now >= t.end && !t.done) {
       t.done = true;
+      localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
       playDing();
     }
   });
@@ -676,6 +708,7 @@ function updateTimers() {
 
 export function removeTimer(id) {
   activeTimers = activeTimers.filter(t => t.id !== id);
+  localStorage.setItem('activeTimers', JSON.stringify(activeTimers));
   renderTimers();
 }
 
