@@ -314,6 +314,11 @@ function setupSheets() {
     openContactSheet();
   });
 
+  document.getElementById('mob-fridge').addEventListener('click', () => {
+    closeMobileMenu();
+    openFridgeSheet();
+  });
+
   let fridgeIngredients = [];
   const fridgeForm = document.getElementById('fridge-form');
   const fridgeInput = document.getElementById('fridge-input');
