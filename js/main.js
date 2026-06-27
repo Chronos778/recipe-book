@@ -338,16 +338,24 @@ function setupSheets() {
     });
   }
 
+  if (fridgeInput) {
+    fridgeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const input = fridgeInput.value.trim();
+        if (!input) return;
+        if (!fridgeIngredients.includes(input)) {
+          fridgeIngredients.push(input);
+          renderPills();
+        }
+        fridgeInput.value = '';
+      }
+    });
+  }
+
   if (fridgeForm) {
     fridgeForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = fridgeInput.value.trim();
-      if (!input) return;
-      if (!fridgeIngredients.includes(input)) {
-        fridgeIngredients.push(input);
-        renderPills();
-      }
-      fridgeInput.value = '';
+      e.preventDefault(); // Catch any stray form submissions
     });
   }
 
