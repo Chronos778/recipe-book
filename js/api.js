@@ -41,13 +41,13 @@ function processFullMeals(meals) {
 
 const apiCache = new Map();
 
-export async function fetchCategories() {
+export async function fetchCategories(signal) {
   if (apiCache.has('categories')) {
     store.setCategories(apiCache.get('categories'));
     return;
   }
   try {
-    const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php');
+    const response = await fetch('https://www.themealdb.com/api/json/v1/1/categories.php', { signal });
     const data = await response.json();
     if (data.categories) {
       const cats = data.categories.map(c => c.strCategory).sort();
@@ -55,50 +55,50 @@ export async function fetchCategories() {
       store.setCategories(cats);
     }
   } catch (err) {
-    console.error('Error fetching categories:', err);
+    if (err.name !== 'AbortError') console.error('Error fetching categories:', err);
   }
 }
 
-export async function fetchRandomFeed() {
+export async function fetchRandomFeed(signal) {
   try {
     const letters = 'bcdefghiklmnoprstvw';
     const randomLetter = letters[Math.floor(Math.random() * letters.length)];
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${randomLetter}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?f=${randomLetter}`, { signal });
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
     store.setFeed(feed);
   } catch (err) {
-    console.error('Error loading random feed:', err);
+    if (err.name !== 'AbortError') console.error('Error loading random feed:', err);
   }
 }
 
-export async function fetchSearch(query) {
+export async function fetchSearch(query, signal) {
   const cacheKey = `search_${query}`;
   if (apiCache.has(cacheKey)) {
     store.setFeed(apiCache.get(cacheKey));
     return;
   }
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/search.php?s=${encodeURIComponent(query)}`, { signal });
     const data = await response.json();
     
     const feed = processFullMeals(data.meals);
     apiCache.set(cacheKey, feed);
     store.setFeed(feed);
   } catch (err) {
-    console.error('Error searching recipes:', err);
+    if (err.name !== 'AbortError') console.error('Error searching recipes:', err);
   }
 }
 
-export async function fetchByCategory(category) {
+export async function fetchByCategory(category, signal) {
   const cacheKey = `cat_${category}`;
   if (apiCache.has(cacheKey)) {
     store.setFeed(apiCache.get(cacheKey));
     return;
   }
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/filter.php?c=${encodeURIComponent(category)}`, { signal });
     const data = await response.json();
     
     const feedItems = [];
@@ -116,21 +116,21 @@ export async function fetchByCategory(category) {
     apiCache.set(cacheKey, feedItems);
     store.setFeed(feedItems);
   } catch (err) {
-    console.error('Error fetching category:', err);
+    if (err.name !== 'AbortError') console.error('Error fetching category:', err);
   }
 }
 
-export async function fetchRecipeById(id) {
+export async function fetchRecipeById(id, signal) {
   // If we already have the full details cached, skip fetch
   if (store.state.recipes[id]) return store.state.recipes[id];
   
   try {
-    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
+    const response = await fetch(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`, { signal });
     const data = await response.json();
     processFullMeals(data.meals);
     return store.state.recipes[id];
   } catch (err) {
-    console.error('Error fetching recipe details:', err);
+    if (err.name !== 'AbortError') console.error('Error fetching recipe details:', err);
     return null;
   }
 }

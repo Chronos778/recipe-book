@@ -121,6 +121,8 @@ function setupScrollDetect() {
 /* ═══════════════════════════════════════════════════════════════
    SEARCH & CATEGORY FILTER
    ═══════════════════════════════════════════════════════════════ */
+let currentAbortController = null;
+
 function setupSearch() {
   const searchBar = document.getElementById('search-bar');
   let debounceTimeout;
@@ -134,10 +136,14 @@ function setupSearch() {
       const grid = document.getElementById('recipes');
       if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Searching database...</div>';
       
+      if (currentAbortController) currentAbortController.abort();
+      currentAbortController = new AbortController();
+      const signal = currentAbortController.signal;
+      
       if (query === '') {
-        fetchRandomFeed();
+        fetchRandomFeed(signal);
       } else {
-        fetchSearch(query);
+        fetchSearch(query, signal);
       }
     }, 300);
   });
@@ -169,10 +175,14 @@ function setupCategoryTabs() {
     const grid = document.getElementById('recipes');
     if (grid) grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--ink-3);">Loading category...</div>';
     
+    if (currentAbortController) currentAbortController.abort();
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
+    
     if (cat === 'all') {
-      fetchRandomFeed();
+      fetchRandomFeed(signal);
     } else {
-      fetchByCategory(cat);
+      fetchByCategory(cat, signal);
     }
   });
 }
