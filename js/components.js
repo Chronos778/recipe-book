@@ -210,7 +210,7 @@ function renderRecipeCards() {
     }
     
     const img = card.querySelector('.card-img');
-    img.src = `${item.image}/preview`;
+    img.src = item.image;
     img.alt = item.title;
     
     card.querySelector('.card-title').textContent = item.title;
